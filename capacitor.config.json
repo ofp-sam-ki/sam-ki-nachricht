@@ -1,0 +1,6 @@
+{
+  "appId": "de.fraunhofer.ipa.samki",
+  "appName": "SAM-KI-Nachricht",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
