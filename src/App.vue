@@ -103,30 +103,57 @@
             <input id="Baugruppe" type="text" class="form-control" v-model="baugruppe" />
           </ModalComponent>
 
-        <!-- FOTO -->
+       <!-- FOTO -->
         <tr>
         <div class="btn-group" v-if="displayScan">
           <div style="background-color:lightblue; width: 150px; height: 100px; float:left;font-size:24px;text-align:center;vertical-align: middle;padding-top:35px;">Foto</div>
           <input id="bild" type="file" accept="image/*" capture="camera" style="display:none;" @change="onImageChange" />
-          <!-- img :src="imageData[0]" style="width: 200px; height: 100px; float:left;border:none"
-          <div style="background-color: white;padding: 0px 0px;float: left;text-align: center;display: inline;vertical-align: middle;font-size:72px;height:100px;width:100px;padding-bottom: 10px;">
-            <span v-if="imageData[0]" style="color:green;">&#10003;</span> 
-          </div> -->
           <button id="bild_vorschau" @click="showModalBVorschau=true" style="font-size:24px;width:200px">
             <span v-if="!imageData" style="color:lightgrey;">Vorschau</span>
             <img v-if="imageData" :src="imageData" style="max-width:100%;max-height:100%;">
           </button>
           <button id="bild_add" onclick="document.getElementById('bild').click();" style="color:green;"><span>&#128247;</span></button>
           <!-- button id="bild_edit" :disabled="!imageData" @click="showModalBEditor=true" style="color:grey;"><span>&#9998;</span></button-->
-          <button id="bild_edit" disabled style="color:grey;"><span>&#9998;</span></button>
+          <button id="bild_edit" :disabled="!imageData" @click="showModalBEditor=true" style="color:grey;"><span>&#9998;</span></button>
           <button id="bild_rem" :disabled="!imageData" @click="removeImage" style="color:grey;"><span>&#215;</span></button>
         </div>
         </tr>
         <ModalComponent v-model="showModalBVorschau" title="Foto" modal-class="modal-gross">
           <img style="max-width:100%;max-height:100%;" :src="imageData" />
         </ModalComponent>
-        <ModalComponent v-model="showModalBEditor" title="Editor">
-          <img :src="imageData" />
+        <ModalComponent v-model="showModalBEditor" title="Freies Markieren" modal-class="modal-gross" @after-open="initializeCanvas">
+          <div ref="editorContainer">
+            <button @click="cancelEditing" style="border-radius: 5px;background-color: #006da0;border: none;color: white;padding: 8px 16px;text-align: center;text-decoration: none;display: inline-block;font-size: 14px;margin-bottom: 20px;">Unmarkiert übernehmen</button>
+            <button @click="saveEdits" style="border-radius: 5px;background-color: #006da0;border: none;color: white;padding: 8px 16px;text-align: center;text-decoration: none;display: inline-block;font-size: 14px;margin-bottom: 20px;float: right;">Markiert übernehmen</button>
+            <br>
+            <div class="color-selector" style="display:flex;justify-content: center;align-items: center;">
+              <span style="margin-right:5px">Farbwahl:</span>
+              <button
+                v-for="color in colors"
+                :key="color"
+                :style="{ backgroundColor: color }"
+                :class="{ 
+                  selected: color === selectedColor, 
+                  dark: darkColors.includes(color) && color === selectedColor,
+                  light: lightColors.includes(color) && color === selectedColor
+                }"
+                @click="selectedColor = color"
+              ></button>
+            </div>
+            
+            
+            <canvas ref="canvas" 
+              @mousedown="startDrawing"
+              @mousemove="draw"
+              @mouseup="stopDrawing"
+              @mouseleave="stopDrawing"
+              @touchstart.prevent="startDrawing"
+              @touchmove.prevent="draw"
+              @touchend.prevent="stopDrawing"
+              @touchcancel.prevent="stopDrawing"
+              style="float: left; border: none; max-width:100%;max-height:100%;"></canvas>
+          </div>
+          
         </ModalComponent>
 
 
@@ -264,6 +291,9 @@
       <button type="button" class="button" @click="showModalLizenz=true" style="background-color: transparent;">
         <img src="./assets/feld_info.png" style="height:50px;width:50px;border-radius:50%;box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.3)">
       </button>
+       <button type="button" class="button" @click="showModalProblem=true" style="background-color: transparent;">
+        <img src="./assets/feld_idee.png" style="height:50px;width:50px;border-radius:50%;box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.3)">
+      </button>
     </div>
 
     <ModalComponent v-model="showModalLizenz" title="Informationen und Lizenzen">
@@ -313,7 +343,8 @@ export default {
       imageBase64: '',
       uri: '',
       loading: false,
-      imageData: null,
+      imageData: [],
+      selectedImages: [],
       video: null,
       montageplatz: '',
       baugruppe: '',
@@ -332,6 +363,8 @@ export default {
       showModalVVorschau: false,
       showModalBVorschau: false,
       showModalBEditor: false,
+      showModalProblem: false,
+      problemDescription: '',
       displayScan: true,
       AuswahlAbteilungen: [],
       BetroffeneAbteilungen: '',
@@ -399,13 +432,44 @@ export default {
       isFinished: false, // finished recording - action buttons indicator
       recorder: null, // component wide MediaRecorder
       videoUrl: null, // link to video - assigned when done writing video file
-      stream: null
+      stream: null,
+      // Canvas
+      canvas: null,
+      ctx: null,
+      img: new Image(),
+      isDrawing: false,
+      editMode: false,
+      colors: ['red', 'yellow', 'green', 'blue', 'white', 'black'],
+      lightColors: ['red', 'yellow', 'white'],
+      darkColors: ['green', 'blue', 'black'],
+      selectedColor: 'red', // Default selected color
+      // Canvas Ende
     };
   },
   async beforeMount(){
     console.log("Funktion beforeMount");
     this.initialisieren();
     this.queriesAbfragen();
+  },
+  watch: {
+    showModalBEditor(newValue) {
+      if (newValue) {
+        if (this.$refs.canvas) {
+          this.initializeCanvas();
+        } else {
+          this.$nextTick(() => {
+            this.initializeCanvas();
+          });
+        }
+      } else {
+        this.stopDrawing();
+      }
+    },
+    imageData(newImageData, oldImageData) {
+      if (newImageData !== oldImageData && newImageData != null) {
+        this.showModalBEditor = true;
+      }
+    },
   },
   mounted() {
     console.log("Funktion mounted");
@@ -609,6 +673,14 @@ export default {
       e.target.files = null;
       this.onImageChange(e);
     },
+    removeImages() {
+      // Sort in descending order to avoid messing up the indices when splicing
+      this.selectedImages.sort((a, b) => b - a);
+      this.selectedImages.forEach(index => {
+        this.imageData.splice(index, 1);
+      });
+      this.selectedImages = [];
+    },
     removeVideo() {
       console.log("Funktion removeVideo");
       this.video = null;
@@ -624,7 +696,7 @@ export default {
 
       if (files) {
         addButton.style.color="grey";
-        //editButton.style.color="black";
+        editButton.style.color="black";
         remButton.style.color="red";
 
         for (let i = 0; i < files.length; i++) {
@@ -633,12 +705,14 @@ export default {
           reader.readAsDataURL(file);
           reader.onload = () => {
             this.imageData = reader.result;
+            // this.imageData.push(reader.result);
+            this.img.src = this.imageData;
           };
           this.bildpfad = file;
         }
       } else {
         addButton.style.color="green";
-        //editButton.style.color="grey";
+        editButton.style.color="grey";
         remButton.style.color="grey";
       }
     },
@@ -650,6 +724,120 @@ export default {
       var parseFile = this.dataURLtoFile(dataURL, 'image');
       this.bildpfad = parseFile;
     },
+    selectImage(index) {
+      const selectedIndex = this.selectedImages.indexOf(index);
+      if (selectedIndex === -1) {
+        // Image is not selected, so select it
+        this.selectedImages.push(index);
+      } else {
+        // Image is already selected, so deselect it
+        this.selectedImages.splice(selectedIndex, 1);
+      }
+    },
+    // Canvas
+    initializeCanvas() {
+      if (!this.imageData) {
+        return;
+      }
+
+      this.canvas = this.$refs.canvas;
+      this.ctx = this.canvas.getContext("2d");
+
+      // Create a new image object
+      let img = new Image();
+
+      // When the image has loaded, draw it on the canvas
+      img.onload = () => {
+        this.canvas.width = img.width;
+        this.canvas.height = img.height;
+        this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+        this.editMode = true;
+      };
+
+      // Start loading the image
+      img.src = this.imageData;
+    },
+    getEventCoords(e) {
+      const event = e.type.startsWith('touch') ? e.touches[0] : e;
+      const rect = this.canvas.getBoundingClientRect();
+      // Calculate the scale factor
+      const scaleX = this.canvas.width / rect.width;
+      const scaleY = this.canvas.height / rect.height;
+
+      return {
+        x: (event.clientX - rect.left) * scaleX,
+        y: (event.clientY - rect.top) * scaleY,
+      };
+    },
+    startDrawing(e) {
+      if (!this.editMode) return;
+      this.isDrawing = true;
+      this.ctx.strokeStyle = this.selectedColor;
+      this.ctx.beginPath();
+      const coords = this.getEventCoords(e);
+      this.ctx.moveTo(coords.x, coords.y);
+    },
+    draw(e) {
+      if (!this.isDrawing) return;
+      const coords = this.getEventCoords(e);
+      this.ctx.lineWidth = 8;
+      this.ctx.lineTo(coords.x, coords.y);      
+      this.ctx.stroke();
+    },
+    stopDrawing() {
+      this.isDrawing = false;
+    },
+    saveEdits() {
+      this.imageData = this.canvas.toDataURL("image/jpeg", 0.7);
+      this.$nextTick(() => {
+        this.showModalBEditor = false;
+      });
+      this.editMode = false;
+    },
+    drawImageOnCanvas() {
+      const img = this.$refs.imageInModal;
+      this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+    },
+    saveImage() {
+      const link = document.createElement("a");
+      link.href = this.canvas.toDataURL("image/jpeg", 0.7);
+      link.download = "edited-image.jpeg";
+      link.click();
+    },
+    cancelEditing() {
+      this.showModalBEditor = false;
+      this.editMode = false;
+    },
+    // Canvas Ende
+    // Problemmeldung
+    reportProblem() {
+      //var host = this.modelhost;//'http://' + window.location.hostname;
+      var host = 'http://127.0.0.1:4000'; // Host auf Port 4000 geändert, da sonst CORS Fehler
+      let content = {
+        description: this.problemDescription
+      };
+
+      axios({
+        method: 'post',
+        url: host + '/feedback',
+        data: content
+      }).then((response) => {
+          if (response.status == 200) {
+              alert("Erfolgreich gemeldet!");
+              this.showModalProblem = false;
+              this.problemDescription = '';
+          } else {
+              alert("Melden fehlgeschlagen!");
+          }
+      }).catch((error) => {
+          alert("Melden fehlgeschlagen! " + error);
+      });
+    },
+    cancelProblemReport() {
+      this.showModalProblem = false;
+      this.problemDescription = '';
+    },
+    // Problemmeldung Ende
     hostGeaendert() {
       console.log("Funktion hostGeaendert");
       this.AuswahlAbteilungen = [];
@@ -1085,7 +1273,51 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
   margin-top: 60px;
+  position: relative;
 }
+
+#editorContainer canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+.color-selector {
+  height: 40px;
+  padding-bottom: 10px; /* add space below the color buttons */
+  padding-left: 10px;
+  padding-right: 10px;
+  margin:auto;
+}
+
+.color-selector button {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  margin-left: 6px;
+  margin-right: 6px;
+  transition: all 0.3s ease; /* Smooth size change */
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3); /* Shadow for unselected buttons */
+  display: inline-block;
+}
+
+.color-selector .selected {
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Shadow for selected buttons */
+}
+
+.color-selector .selected.light {
+  border: 2px solid #000; /* Black border for light colors */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5), 0 0 0 1px #000; /* Add a black ring around the white border */
+}
+
+.color-selector .selected.dark {
+  border: 2px solid #fff; /* White border for dark colors */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5), 0 0 0 1px #000; /* Add a black ring around the white border */
+}
+
+.color-selector button:last-child {
+  margin-right: 0;
+}
+
 
 .btn-group button {
   background-color: white; /* Green background */
@@ -1117,6 +1349,11 @@ export default {
 /* Add a background color on hover */
 .btn-group button:active:hover {
   background-color: lightblue;
+}
+
+/* Selected Images */
+.selected {
+  border: 2px solid red;
 }
 
 .container {
