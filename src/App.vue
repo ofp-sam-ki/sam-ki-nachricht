@@ -319,6 +319,14 @@
         THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       </textarea>
     </ModalComponent>
+     <ModalComponent v-model="showModalProblem" title="Problem oder Feedback melden" modal-class="modal-problem" v-on:click.self="cancelProblemReport">
+      <div>
+        <label for="problemDescription" style="display: block; margin-bottom: 10px;">Beschreibung:</label>
+        <textarea id="problemDescription" v-model="problemDescription" style="display: block; resize: none; width: 98%; height: 200px; margin-bottom: 20px;"></textarea>
+      </div>
+      <button @click.stop="cancelProblemReport" class="button">Abbrechen</button>
+      <button @click.stop="reportProblem" class="button" style="float: right;">Problem melden</button>
+    </ModalComponent>
   </div>
 </template>
 <script>
@@ -401,20 +409,6 @@ export default {
       Modelle: [],
       pref: {},
       useDefaultUI: true,
-      options: {
-        includeUI: {
-          initMenu: 'draw', // set the initial menu to 'draw'
-          menu: ['crop', 'draw'], 
-          menuBarPosition: 'left',
-          brush: {
-            width: 10,
-            color: '#000000',
-          },
-        },
-        // for tui-image-editor component's "options" prop
-        cssMaxWidth: 700,
-        cssMaxHeight: 500,
-      },
       bildpfad: "",
       queryInput: {
         montageplatz: '',
