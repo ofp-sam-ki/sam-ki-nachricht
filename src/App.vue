@@ -718,16 +718,6 @@ export default {
       var parseFile = this.dataURLtoFile(dataURL, 'image');
       this.bildpfad = parseFile;
     },
-    selectImage(index) {
-      const selectedIndex = this.selectedImages.indexOf(index);
-      if (selectedIndex === -1) {
-        // Image is not selected, so select it
-        this.selectedImages.push(index);
-      } else {
-        // Image is already selected, so deselect it
-        this.selectedImages.splice(selectedIndex, 1);
-      }
-    },
     // Canvas
     initializeCanvas() {
       if (!this.imageData) {
