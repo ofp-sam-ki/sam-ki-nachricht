@@ -299,7 +299,7 @@
     <ModalComponent v-model="showModalLizenz" title="Informationen und Lizenzen">
       Implementierung im Förderprojekt SAM-KI<br>
       (c) 2023 Fraunhofer Institut für Produktionstechnik<br>und Automatisierung (FhG IPA)<br>
-      <textarea class="textbox" name="note">
+      <textarea class="textbox" name="note" readonly>
         Vue.js
 
         VueDragSelector
