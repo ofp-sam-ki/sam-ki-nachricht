@@ -298,8 +298,11 @@
 
     <ModalComponent v-model="showModalLizenz" title="Informationen und Lizenzen">
       Implementierung im Förderprojekt SAM-KI<br>
-      (c) 2023 Fraunhofer Institut für Produktionstechnik<br>und Automatisierung (FhG IPA)<br>
-      <textarea class="textbox" name="note" readonly>
+      (c) 2023 Fraunhofer Institut für Produktionstechnik<br>und Automatisierung (FhG IPA)<br><br>
+      <strong>Lizenzen:</strong><br><br>
+      <div class="textbox" name="note" readonly v-html="licenseText">
+      </div>
+      <textarea>
         Vue.js
 
         VueDragSelector
@@ -317,6 +320,7 @@
         Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
         The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
         THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+    
       </textarea>
     </ModalComponent>
      <ModalComponent v-model="showModalProblem" title="Problem oder Feedback melden" modal-class="modal-problem" v-on:click.self="cancelProblemReport">
@@ -359,6 +363,7 @@ export default {
       auftrag: '',
       name: '',
       freitext: "",
+      licenseText: "",
       selected: [],
       showModal: false,
       showModalV: false,
@@ -474,6 +479,14 @@ export default {
       const uri = item.getUri();
       const mimeType = item.getType();
     }*/
+  },
+  async created() {
+    try {
+      const response = await axios.get('/license.html');
+      this.licenseText = response.data;
+    } catch (error) {
+      console.error(error);
+    }
   },
   methods: {
     openVideo() {

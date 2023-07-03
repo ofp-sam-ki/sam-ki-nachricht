@@ -7,7 +7,7 @@
     "serve": "vue-cli-service serve --openssl-legacy-provider",
     "build": "vue-cli-service build --openssl-legacy-provider",
     "lint": "vue-cli-service --openssl-legacy-provider lint",
-    "generate-licenses": "node ../scripts/generateLicenses.js"
+    "generate-licenses": "./scripts/generate_license_files.sh"
   },
   "dependencies": {
     "@capacitor-community/barcode-scanner": "^3.0.3",
