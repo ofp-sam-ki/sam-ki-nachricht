@@ -107,14 +107,19 @@
         <tr>
         <div class="btn-group" v-if="displayScan">
           <div style="background-color:lightblue; width: 150px; height: 100px; float:left;font-size:24px;text-align:center;vertical-align: middle;padding-top:35px;">Foto</div>
-          <input id="bild" type="file" accept="image/*" capture="camera" style="display:none;" @change="onImageChange" />
+          <input id="bild" type="file" accept="image/*" capture="camera" style="display:none;" @change="onImageUpload" multiple ref="fileInput"/>
           <button id="bild_vorschau" @click="showModalBVorschau=true" style="font-size:24px;width:200px">
             <span v-if="!imageData" style="color:lightgrey;">Vorschau</span>
-            <img v-if="imageData" :src="imageData" style="max-width:100%;max-height:100%;">
+            <div v-if="imageData">
+              <div v-for="(image, index) in imageData" :key="index">
+                <img :src="image" style="max-width:100%;max-height:100%;">
+              </div>
+            </div>
           </button>
-          <button id="bild_add" onclick="document.getElementById('bild').click();" style="color:green;"><span>&#128247;</span></button>
+          <button id="bild_add" @click="selectFile" style="color:green;"><span>&#128247;</span></button>
           <!-- button id="bild_edit" :disabled="!imageData" @click="showModalBEditor=true" style="color:grey;"><span>&#9998;</span></button-->
-          <button id="bild_edit" :disabled="!imageData" @click="showModalBEditor=true" style="color:grey;"><span>&#9998;</span></button>
+          <!-- <button id="bild_edit" :disabled="!imageData" @click="showModalBEditor=true" style="color:grey;"><span>&#9998;</span></button> -->
+          <button id="bild_edit" :disabled="!imageData" @click="initializeCanvas(selectedImageIndex || 0)" style="color:grey;"><span>&#9998;</span></button>
           <button id="bild_rem" :disabled="!imageData" @click="removeImage" style="color:grey;"><span>&#215;</span></button>
         </div>
         </tr>
@@ -151,7 +156,12 @@
               @touchmove.prevent="draw"
               @touchend.prevent="stopDrawing"
               @touchcancel.prevent="stopDrawing"
-              style="float: left; border: none; max-width:100%;max-height:100%;"></canvas>
+              style="float: left; border: none; max-width:100%;max-height:100%;">
+            </canvas>
+            <div v-for="(image, index) in imageData" :key="index">
+              <img :src="image" @click="selectImage(index)" style="max-width:100%;max-height:100%;">
+            </div>
+
           </div>
           
         </ModalComponent>
@@ -339,6 +349,7 @@
 import axios from 'axios';
 import PulseLoader from 'vue-spinner/src/PulseLoader.vue'
 import Vue from "vue";
+import { nextTick } from 'vue';
 import { Preferences } from '@capacitor/preferences';
 import { ImageEditor } from '@toast-ui/vue-image-editor';
 import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
@@ -357,6 +368,7 @@ export default {
       loading: false,
       imageData: [],
       selectedImages: [],
+      selectedImageIndex: 0,
       video: null,
       montageplatz: '',
       baugruppe: '',
@@ -451,22 +463,75 @@ export default {
     this.queriesAbfragen();
   },
   watch: {
-    showModalBEditor(newValue) {
+    showModalBEditor_old(newValue) {
       if (newValue) {
-        if (this.$refs.canvas) {
-          this.initializeCanvas();
-        } else {
-          this.$nextTick(() => {
-            this.initializeCanvas();
-          });
-        }
+        this.$nextTick(() => {
+          this.initializeCanvas(this.selectedImageIndex);
+        });
       } else {
         this.stopDrawing();
       }
     },
+    showModalBEditor_neu1(newValue) {
+      console.log('showModalBEditor changed', newValue);
+      if (newValue) {
+        this.$nextTick(() => {
+          console.log('nextTick', this.$refs.canvas);
+          if (this.canvas) {
+            this.initializeCanvas(this.selectedImageIndex);
+          } else {
+            // Set up a MutationObserver to watch for changes in the DOM
+            const observer = new MutationObserver((mutationsList, observer) => {
+              console.log('DOM changed', this.$refs.canvas);
+              // If the canvas element is added to the DOM, initialize the canvas and stop observing
+              if (this.$refs.canvas) {
+                this.canvas = this.$refs.canvas;
+                this.initializeCanvas(this.selectedImageIndex);
+                observer.disconnect();
+              }
+            });
+
+            // Start observing the document with the configured parameters
+            observer.observe(document, { childList: true, subtree: true });
+          }
+        });
+      } else {
+        this.stopDrawing();
+      }
+    },
+    showModalBEditor(newValue) {
+      if (newValue) {
+        this.$nextTick(() => {
+          if (this.$refs.canvas) {
+            this.initializeCanvas(this.selectedImageIndex);
+          } else {
+            // Set up a MutationObserver to watch for changes in the DOM
+            const observer = new MutationObserver((mutationsList, observer) => {
+              // If the canvas element is added to the DOM, initialize the canvas and stop observing
+              if (this.$refs.canvas) {
+                this.canvas = this.$refs.canvas;
+                this.initializeCanvas(this.selectedImageIndex);
+                observer.disconnect();
+              }
+            });
+
+            // Start observing the document with the configured parameters
+            observer.observe(document, { childList: true, subtree: true });
+          }
+        });
+      } else {
+        this.stopDrawing();
+      }
+    },
+
     imageData(newImageData, oldImageData) {
-      if (newImageData !== oldImageData && newImageData != null) {
+      if (newImageData !== oldImageData && newImageData && newImageData.length > 0) {
         this.showModalBEditor = true;
+      }
+    },
+    selectedImageIndex(newIndex, oldIndex) {
+      if (newIndex !== oldIndex) {
+        this.initializeCanvas(newIndex);
       }
     },
   },
@@ -479,6 +544,12 @@ export default {
       const uri = item.getUri();
       const mimeType = item.getType();
     }*/
+    this.$nextTick(() => {
+      if (this.showModalBEditor) {
+        console.log("Funktion initializeCanvas in mounted");
+        this.initializeCanvas(this.selectedImageIndex);
+      }
+    });
   },
   async created() {
     try {
@@ -680,17 +751,41 @@ export default {
       e.target.files = null;
       this.onImageChange(e);
     },
+    // loescht alle Bilder
     removeImages() {
-      // Sort in descending order to avoid messing up the indices when splicing
-      this.selectedImages.sort((a, b) => b - a);
-      this.selectedImages.forEach(index => {
-        this.imageData.splice(index, 1);
-      });
-      this.selectedImages = [];
+      this.imageData = null;
     },
     removeVideo() {
       console.log("Funktion removeVideo");
       this.video = null;
+    },
+    onImageUpload(event) {
+      console.log("onImageUpload ausfuehren.");
+      const files = event.target.files;
+      const imageData = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          imageData.push(event.target.result);
+          console.log("in reader.onload " + imageData.length + " Bilder hochgeladen.");
+          if (imageData.length === files.length) {
+            this.imageData = imageData;
+            console.log("in IF... " + imageData.length + " Bilder hochgeladen.");
+          }
+        }
+        reader.readAsDataURL(file);
+        console.log("Am Ende v. For-Schleife: " + imageData.length + " Bilder hochgeladen.");
+      }
+      console.log("Am Ende v. onImageUpload: " + imageData.length + " Bilder hochgeladen.");
+    },
+    selectFile() {
+      console.log("Selectfile ausfuehren.");
+      this.$refs.fileInput.click();
+    },
+    selectImage(index) {
+      this.selectedImageIndex = index;
+      this.showModalBEditor = true;
     },
     onImageChange(e) {
       console.log("Funktion onImageChange");
@@ -732,7 +827,7 @@ export default {
       this.bildpfad = parseFile;
     },
     // Canvas
-    initializeCanvas() {
+    initializeCanvas_old() {
       if (!this.imageData) {
         return;
       }
@@ -753,6 +848,31 @@ export default {
 
       // Start loading the image
       img.src = this.imageData;
+    },
+    initializeCanvas(index = 0) {
+      if (!this.imageData || this.imageData.length === 0) {
+        return;
+      }
+
+      this.$nextTick(() => {
+        this.canvas = this.$refs.canvas;
+        this.ctx = this.canvas.getContext("2d");
+
+        // Create a new image object
+        let img = new Image();
+
+        // When the image has loaded, draw it on the canvas
+        img.onload = () => {
+          this.canvas.width = img.width;
+          this.canvas.height = img.height;
+          this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+          this.editMode = true;
+        };
+
+        // Start loading the image
+        img.src = this.imageData[index];
+        console.log("initializeCanvas: " + this.canvas.width + "x" + this.canvas.height);
+      });
     },
     getEventCoords(e) {
       const event = e.type.startsWith('touch') ? e.touches[0] : e;
@@ -784,8 +904,15 @@ export default {
     stopDrawing() {
       this.isDrawing = false;
     },
-    saveEdits() {
+    saveEdits_old() {
       this.imageData = this.canvas.toDataURL("image/jpeg", 0.7);
+      this.$nextTick(() => {
+        this.showModalBEditor = false;
+      });
+      this.editMode = false;
+    },
+    saveEdits() {
+      this.imageData[this.selectedImageIndex] = this.canvas.toDataURL("image/jpeg", 0.7);
       this.$nextTick(() => {
         this.showModalBEditor = false;
       });
