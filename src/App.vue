@@ -119,7 +119,7 @@
           <button id="bild_add" @click="selectFile" style="color:green;"><span>&#128247;</span></button>
           <!-- button id="bild_edit" :disabled="!imageData" @click="showModalBEditor=true" style="color:grey;"><span>&#9998;</span></button-->
           <!-- <button id="bild_edit" :disabled="!imageData" @click="showModalBEditor=true" style="color:grey;"><span>&#9998;</span></button> -->
-          <button id="bild_edit" :disabled="!imageData" @click="initializeCanvas(selectedImageIndex || 0)" style="color:grey;"><span>&#9998;</span></button>
+          <button id="bild_edit" :disabled="!imageData" @click="initializeCanvas(selectedImageIndex || 0)" style="color:black;"><span>&#9998;</span></button>
           <button id="bild_rem" :disabled="!imageData" @click="removeImage" style="color:grey;"><span>&#215;</span></button>
         </div>
         </tr>
@@ -511,7 +511,7 @@ export default {
               if (this.$refs.canvas) {
                 this.canvas = this.$refs.canvas;
                 this.initializeCanvas(this.selectedImageIndex);
-                observer.disconnect();
+                //observer.disconnect();
               }
             });
 
@@ -529,11 +529,11 @@ export default {
         this.showModalBEditor = true;
       }
     },
-    selectedImageIndex(newIndex, oldIndex) {
-      if (newIndex !== oldIndex) {
-        this.initializeCanvas(newIndex);
-      }
-    },
+    // selectedImageIndex(newIndex, oldIndex) {
+    //   if (newIndex !== oldIndex) {
+    //     this.initializeCanvas(newIndex);
+    //   }
+    // },
   },
   mounted() {
     console.log("Funktion mounted");
@@ -544,12 +544,12 @@ export default {
       const uri = item.getUri();
       const mimeType = item.getType();
     }*/
-    this.$nextTick(() => {
-      if (this.showModalBEditor) {
-        console.log("Funktion initializeCanvas in mounted");
-        this.initializeCanvas(this.selectedImageIndex);
-      }
-    });
+    // this.$nextTick(() => {
+    //   if (this.showModalBEditor) {
+    //     console.log("Funktion initializeCanvas in mounted");
+    //     this.initializeCanvas(this.selectedImageIndex);
+    //   }
+    // });
   },
   async created() {
     try {
@@ -763,6 +763,7 @@ export default {
       console.log("onImageUpload ausfuehren.");
       const files = event.target.files;
       const imageData = [];
+
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const reader = new FileReader();
@@ -784,7 +785,9 @@ export default {
       this.$refs.fileInput.click();
     },
     selectImage(index) {
-      this.selectedImageIndex = index;
+      // aktuelles Bild speichern mit saveEdits
+      this.saveEdits();
+      this.selectedImageIndex(index);
       this.showModalBEditor = true;
     },
     onImageChange(e) {
@@ -929,6 +932,7 @@ export default {
       link.click();
     },
     cancelEditing() {
+      this.saveEdits();
       this.showModalBEditor = false;
       this.editMode = false;
     },
