@@ -36,11 +36,6 @@
           :style="{ marginLeft: index === 0 ? 0 : '10px' }">
           <span class="status-text">{{ status }}</span>
         </div>
-        <!-- <div 
-          v-for="(status, index) in statuses.slice(0, -1)" 
-          :key="status + '-' + statuses[index + 1]"
-          class="status-bar-line"
-        ></div> -->
       </div> 
     </div>
   </div>
@@ -109,15 +104,7 @@ export default {
   align-items: center;
   position: relative;
   margin-top: 20px;
-}
-
-
-.status-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: relative;
-  margin-top: 20px;
+  padding-top: 50px;
 }
 
 .status-circle {
@@ -127,45 +114,51 @@ export default {
   background-color: #ccc;
   display: inline-block;
   position: relative;
-  margin-right: 20px;
+  margin: 60px;
 }
+
 
 .status-text {
   position: absolute;
-  bottom: -5em;
+  bottom: -2em; /* Abstand Text zu Punkten */
   left: 0;
   display: block;
   font-size: 12px;
+  line-height: 1.5;
+  width: 100px;
 }
 
-
+/* Aktives Element - blau */
 .status-circle.active {
-  background-color: #0078d4;
+  background-color: #2e6b9c;
 }
 
-.status-circle:first-child {
-  margin-left: 0;
+/* Aktives Element - Text fett */
+.status-circle.active .status-text {
+  font-weight: bold;
 }
 
+/* aktive Verbindungslinien - blau */
 .status-circle:not(:last-child)::after {
   content: "";
   position: absolute;
   top: 50%;
-  left: 100%; /* Start from the right edge of the circle */
-  width: calc((100% - 20px) + 10px); /* Adjust based on spacing between circles */
+  left: 100%; /* An rechter Kante von Punkten starten */
+  width: calc(100% + 40px); /* An Abstand zwischen Punkten anpassen */
   height: 2px;
   background-color: lightgrey;
-  transform: translateY(-50%); /* Center the line vertically */
-  z-index: -1; /* To ensure lines appear below the circles */
+  transform: translateY(-50%); /* Linie vertikal zentrieren */
 }
 
+/* vergangene Verbindungslinien - grau */
+.status-circle.before-active:not(:last-child)::after {
+  background-color: grey;
+  height: 4px; /* Linie dicker machen */
+}
+
+/* vergangene Punkte */
 .status-circle.before-active {
   background-color: grey;
   border-color: grey;
-}
-
-.status-circle.before-active:not(:last-child)::after {
-  background-color: grey;
-  height: 4px; /* Make the line thicker */
 }
 </style>
