@@ -1317,11 +1317,11 @@ export default {
 
 
 .btn-group button {
-  background-color: white; /* Green background */
-  border: 1px solid white; /* Green border */
+  background-color: white; 
+  border: 1px solid white; 
   color: white; /* White text */
-  padding: 0px 0px; /* Some padding */
-  cursor: pointer; /* Pointer/hand icon */
+  padding: 0px 0px; 
+  cursor: pointer; 
   float: left; /* Float the buttons side by side */
   text-align: center;
   display: inline;
