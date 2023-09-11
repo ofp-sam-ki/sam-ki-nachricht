@@ -1,5 +1,5 @@
 <template>
-  <div id="app" class="container">
+  <div id="app" class="container" :class="{ 'menu-open': !menuOpen }">
     <div class="burger-menu" @click="toggleMenu">
       <div class="bar"></div>
       <div class="bar"></div>
@@ -83,12 +83,14 @@ export default {
         { title: "Meldung 30", content: "Inhalt der Meldung 30", image: null, status: "in Bearbeitung" }
       ],
       selectedItem: null,
-      statuses: ["Abgeschickt", "Empfangen", "in Bearbeitung", "Abgeschlossen"]
+      statuses: ["Abgeschickt", "Empfangen", "in Bearbeitung", "Abgeschlossen"],
+      menuOpen: false
     };
   },
   methods: {
     selectItem(index) {
       this.selectedItem = index;
+      this.menuOpen = false;
     },
     closeItem() {
       this.selectedItem = null;
@@ -98,6 +100,9 @@ export default {
         this.selectedItem++;
       }
     },
+    toggleMenu() { // Add toggleMenu method
+      this.menuOpen = !this.menuOpen;
+    }
   },
 };
 </script>
@@ -105,13 +110,22 @@ export default {
 <style>
 .container {
   display: flex;
-  margin-left: 0px;
+  width: 100%;
+  position: relative;
+  flex-direction: row; /* children are laid out left-to-right */
+}
 
+.container.menu-open .content-area {
+  margin-left: -150px; /* pushes the content area to the right when menu is open */
 }
 
 .burger-menu {
-  display: none;
+  display: block;
   cursor: pointer;
+  position: fixed; /* Make the burger menu fixed */
+  top: 100px;
+  left: 10px;
+  z-index: 10; /* Ensure it's above other elements */
 }
 
 .burger-menu .bar {
@@ -129,7 +143,18 @@ export default {
   max-width: 250px;
   overflow-y: auto;
   border-right: 1px solid #ccc;
+  transition: max-height 0.3s ease-in-out;
+  max-height: 0; /* Hide the menu by default */
+  width: 150px; /* or whatever fixed width you want */
+  flex-shrink: 0; /* prevent it from shrinking */
 }
+
+.items-list.active {
+  max-height: 500px;  
+  display: flex;
+  flex-direction: column;
+}
+
 
 .item {
   padding: 10px;
@@ -146,8 +171,11 @@ export default {
 }
 
 .content-area {
-  flex: 3;
+  flex: 1;
   padding: 20px;
+  position: relative; /* Ensure it has a positioning context */
+  z-index: 5; /* This ensures it's below the burger menu */
+  flex-grow: 300; /* allows this area to grow and take up available space */
 }
 
 
@@ -226,6 +254,11 @@ export default {
 
   .content-display {
     font-size: 10px;
+  }
+
+  .burger-menu {
+    top: 130px;
+    left: 10px;
   }
 
   .status-circle {
