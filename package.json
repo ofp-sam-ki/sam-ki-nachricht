@@ -19,6 +19,7 @@
     "@kouts/vue-modal": "^2.1.9",
     "@toast-ui/vue-image-editor": "^3.15.2",
     "axios": "^0.27.2",
+    "cors": "^2.8.5",
     "dns": "^0.2.2",
     "emailjs-com": "^3.2.0",
     "html-webpack-plugin": "^5.5.0",
