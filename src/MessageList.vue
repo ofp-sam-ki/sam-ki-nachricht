@@ -23,8 +23,15 @@
       <div class="content-display" v-if="selectedItem !== null">
         <h3>{{ items[selectedItem].title }}</h3>
         <p>{{ items[selectedItem].content }}</p>
+        <p><strong>Abteilungen:</strong> {{ items[selectedItem].abteilungen }}</p>
+        <p><strong>Auftrag:</strong> {{ items[selectedItem].auftrag }}</p>
+        <p><strong>Baugruppe:</strong> {{ items[selectedItem].baugruppe }}</p>
+        <p><strong>Grund:</strong> {{ items[selectedItem].grund }}</p>
+        <p><strong>Zeitstempel:</strong> {{ items[selectedItem].zeitstempel }}</p>
         <img v-if="items[selectedItem].image" :src="items[selectedItem].image" alt="content image" />
       </div>
+
+
 
       <!-- Status Indicators -->
       <div class="status-indicators-container">
@@ -92,25 +99,29 @@ export default {
   },
   async created() {
     try {
-      // const response = await axios.get('/Meldungen_Liste/MG01');
-      const response = await axios.get('http://localhost:4000/Meldungen_Liste/MG01');
-      this.items = response.data.map(item => ({
-        title: `${item.Meldung} ${item.Montageplatz}`,
-        content: '',  // Will be populated in the next step
-        image: null,
-        status: ''  // Placeholder for now
-      }));
+      const response = await axios.get('http://localhost:4000/Meldungen_Liste/MG1');
+      const filenames = response.data; 
 
-      // Fetching content for each Meldung
-      for (let item of this.items) {
-        // const contentResponse = await axios.get(`/Meldungen/${item.title}`);
-        const contentResponse = await axios.get(`http://localhost:4000/Meldungen/${item.title}`);
-        item.content = contentResponse.data;
+      for (let filename of filenames) {
+        const contentResponse = await axios.get(`http://localhost:4000/Meldungen/${filename}`);
+        const item = contentResponse.data;
+        this.items.push({
+          title: `${item.Grund} ${item.Montageplatz}`,
+          content: item.Text,
+          image: null,
+          status: '',
+          abteilungen: item.Abteilungen.join(", "),
+          auftrag: item.Auftrag,
+          baugruppe: item.Baugruppe,
+          grund: item.Grund.join(", "),
+          zeitstempel: new Date(item.Zeitstempel).toLocaleDateString()
+        });
       }
     } catch (error) {
       console.error('Error fetching data:', error);
     }
   },
+
   methods: {
     selectItem(index) {
       this.selectedItem = index;
