@@ -27,8 +27,8 @@
         <p><strong>Auftrag:</strong> {{ items[selectedItem].auftrag }}</p>
         <p><strong>Baugruppe:</strong> {{ items[selectedItem].baugruppe }}</p>
         <p><strong>Grund:</strong> {{ items[selectedItem].grund }}</p>
-        <p><strong>Zeitstempel:</strong> {{ items[selectedItem].zeitstempel }}</p>
-        <img v-if="items[selectedItem].image" :src="items[selectedItem].image" alt="content image" />
+        <p><strong>Zeitpunkt:</strong> {{ items[selectedItem].zeitstempel }} Uhr</p>
+        <img v-if="items[selectedItem].image" :src="items[selectedItem].image" alt="Bild" />
       </div>
 
 
@@ -100,25 +100,29 @@ export default {
   async created() {
     try {
       const response = await axios.get('http://localhost:4000/Meldungen_Liste/MG1');
-      const filenames = response.data; 
-
-      for (let filename of filenames) {
-        const contentResponse = await axios.get(`http://localhost:4000/Meldungen/${filename}`);
-        const item = contentResponse.data;
-        this.items.push({
-          title: `${item.Grund} ${item.Montageplatz}`,
-          content: item.Text,
-          image: null,
-          status: '',
-          abteilungen: item.Abteilungen.join(", "),
-          auftrag: item.Auftrag,
-          baugruppe: item.Baugruppe,
-          grund: item.Grund.join(", "),
-          zeitstempel: new Date(item.Zeitstempel).toLocaleDateString()
-        });
-      }
+      const filenames = response.data;
+      const promises = filenames.map(async (filename) => {
+        try {
+          const contentResponse = await axios.get(`http://localhost:4000/Meldungen/${filename}`);
+          const item = contentResponse.data;
+          this.items.push({
+            title: `${item.Grund} ${item.Montageplatz} ${new Date(item.Zeitstempel).toLocaleString()}`,
+            content: item.Text,
+            image: null, // Abändern, wenn Bilder hinzugefügt werden
+            status: item.Status,
+            abteilungen: item.Abteilungen.join(", "),
+            auftrag: item.Auftrag,
+            baugruppe: item.Baugruppe,
+            grund: item.Grund.join(", "),
+            zeitstempel: new Date(item.Zeitstempel).toLocaleString()
+          });
+        } catch (error) {
+          console.error(`Error fetching content for ${filename}:`, error);
+        }
+      });
+      await Promise.all(promises);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching filenames:', error);
     }
   },
 
