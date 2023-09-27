@@ -28,7 +28,15 @@
         <p><strong>Baugruppe:</strong> {{ items[selectedItem].baugruppe }}</p>
         <p><strong>Grund:</strong> {{ items[selectedItem].grund }}</p>
         <p><strong>Zeitpunkt:</strong> {{ items[selectedItem].zeitstempel }} Uhr</p>
-        <img v-if="items[selectedItem].image" :src="items[selectedItem].image" alt="Bild" />
+        <!-- <img v-if="items[selectedItem].image" :src="items[selectedItem].image" alt="Bild" /> -->
+        <!-- Placeholder or Thumbnail Display -->
+        <div v-for="(image, index) in items[selectedItem].images" :key="index" class="thumbnail-container">
+          <div v-if="items[selectedItem].thumbnails && items[selectedItem].thumbnails[index]" class="thumbnail">
+            <img :src="items[selectedItem].thumbnails[index]" @click="openImage(items[selectedItem].photos[index])" alt="Thumbnail" />
+          </div>
+          <button v-else class="thumbnail-placeholder" @click="openImage(items[selectedItem].photos[index])">{{ image }}</button>
+        </div>
+
       </div>
 
 
@@ -60,38 +68,6 @@ export default {
   data() {
     return {
       items: [],
-      // items: [
-      //   { title: "Meldung 1", content: "Inhalt der Meldung 1", image: null, status: "Abgeschickt" },
-      //   { title: "Meldung 2", content: "Inhalt der Meldung 2", image: null, status: "Empfangen" },
-      //   { title: "Meldung 3", content: "Inhalt der Meldung 3", image: null, status: "in Bearbeitung" },
-      //   { title: "Meldung 4", content: "Inhalt der Meldung 4", image: null, status: "Abgeschlossen" },
-      //   { title: "Meldung 5", content: "Inhalt der Meldung 5", image: null, status: "Abgeschickt" },
-      //   { title: "Meldung 6", content: "Inhalt der Meldung 6", image: null, status: "Empfangen" },
-      //   { title: "Meldung 7", content: "Inhalt der Meldung 7", image: null, status: "in Bearbeitung" },
-      //   { title: "Meldung 8", content: "Inhalt der Meldung 8", image: null, status: "Abgeschlossen" },
-      //   { title: "Meldung 9", content: "Inhalt der Meldung 9", image: null, status: "Abgeschickt" },
-      //   { title: "Meldung 10", content: "Inhalt der Meldung 10", image: null, status: "Empfangen" },
-      //   { title: "Meldung 11", content: "Inhalt der Meldung 11", image: null, status: "in Bearbeitung" },
-      //   { title: "Meldung 12", content: "Inhalt der Meldung 12", image: null, status: "Abgeschlossen" },
-      //   { title: "Meldung 13", content: "Inhalt der Meldung 13", image: null, status: "Abgeschickt" },
-      //   { title: "Meldung 14", content: "Inhalt der Meldung 14", image: null, status: "Empfangen" },
-      //   { title: "Meldung 15", content: "Inhalt der Meldung 15", image: null, status: "in Bearbeitung" },
-      //   { title: "Meldung 16", content: "Inhalt der Meldung 16", image: null, status: "Abgeschickt" },
-      //   { title: "Meldung 17", content: "Inhalt der Meldung 17", image: null, status: "Empfangen" },
-      //   { title: "Meldung 18", content: "Inhalt der Meldung 18", image: null, status: "in Bearbeitung" },
-      //   { title: "Meldung 19", content: "Inhalt der Meldung 19", image: null, status: "Abgeschlossen" },
-      //   { title: "Meldung 20", content: "Inhalt der Meldung 20", image: null, status: "Abgeschickt" },
-      //   { title: "Meldung 21", content: "Inhalt der Meldung 21", image: null, status: "Empfangen" },
-      //   { title: "Meldung 22", content: "Inhalt der Meldung 22", image: null, status: "in Bearbeitung" },
-      //   { title: "Meldung 23", content: "Inhalt der Meldung 23", image: null, status: "Abgeschlossen" },
-      //   { title: "Meldung 24", content: "Inhalt der Meldung 24", image: null, status: "Abgeschickt" },
-      //   { title: "Meldung 25", content: "Inhalt der Meldung 25", image: null, status: "Empfangen" },
-      //   { title: "Meldung 26", content: "Inhalt der Meldung 26", image: null, status: "in Bearbeitung" },
-      //   { title: "Meldung 27", content: "Inhalt der Meldung 27", image: null, status: "Abgeschlossen" },
-      //   { title: "Meldung 28", content: "Inhalt der Meldung 28", image: null, status: "Abgeschickt" },
-      //   { title: "Meldung 29", content: "Inhalt der Meldung 29", image: null, status: "Empfangen" },
-      //   { title: "Meldung 30", content: "Inhalt der Meldung 30", image: null, status: "in Bearbeitung" }
-      // ],
       selectedItem: null,
       statuses: ["Abgeschickt", "Empfangen", "in Bearbeitung", "Abgeschlossen"],
       menuOpen: false
@@ -105,10 +81,15 @@ export default {
         try {
           const contentResponse = await axios.get(`http://localhost:4000/Meldungen/${filename}`);
           const item = contentResponse.data;
+          console.log('item.images:', item.images); // Log item.images directly
+          // const thumbnails = item.images ? item.images.map(imageName => `http://localhost:4000/thumbnail/${imageName}`) : [];
+          const photos = item.images ? item.images.map(imageName => `http://localhost:4000/photo/${imageName}`) : [];
           this.items.push({
             title: `${item.Grund} ${item.Montageplatz} ${new Date(item.Zeitstempel).toLocaleString()}`,
             content: item.Text,
-            image: null, // Abändern, wenn Bilder hinzugefügt werden
+            // thumbnails,
+            photos,
+            // image: null, // Array mit Bildnamen, wenn Array, dann Thumbnails abrufen vom Server
             status: item.Status,
             abteilungen: item.Abteilungen.join(", "),
             auftrag: item.Auftrag,
@@ -116,6 +97,9 @@ export default {
             grund: item.Grund.join(", "),
             zeitstempel: new Date(item.Zeitstempel).toLocaleString()
           });
+          // log the URLs to the console
+          // console.log('Thumbnails URLs:', thumbnails);
+          console.log('Photos URLs:', photos);
         } catch (error) {
           console.error(`Error fetching content for ${filename}:`, error);
         }
@@ -139,8 +123,11 @@ export default {
         this.selectedItem++;
       }
     },
-    toggleMenu() { // Add toggleMenu method
+    toggleMenu() { 
       this.menuOpen = !this.menuOpen;
+    },
+    openImage(imageUrl) {
+      window.open(imageUrl, '_blank');
     }
   },
 };
@@ -156,6 +143,48 @@ export default {
 
 .container.menu-open .content-area {
   margin-left: -150px; /* pushes the content area to the right when menu is open */
+}
+
+.thumbnail-container {
+  display: inline-block;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.thumbnail-container img {
+  max-width: 100px;
+  max-height: 100px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.thumbnail {
+  width: 100px;
+  height: 100px;
+  overflow: hidden;
+  position: relative;
+}
+
+.thumbnail img {
+  display: block;
+  min-width: 100%;
+  min-height: 100%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.thumbnail-placeholder {
+  display: inline-block;
+  width: 100px;
+  height: 100px;
+  background-color: #e0e0e0;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  line-height: 100px;
+  color: #000;
 }
 
 .burger-menu {
