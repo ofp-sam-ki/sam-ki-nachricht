@@ -1,7 +1,7 @@
 <template>
   <div>
-    <button class="button" @click="showNewMessage = true">Neue Meldung</button>
-    <button class="button" @click="showMessageList = true">Zustand abfragen</button>
+    <button v-if="!showNewMessage" class="button" @click="showNewMessage = true">Neue Meldung</button>
+    <button v-if="!showMessageList" class="button" @click="showMessageList = true">Zustand abfragen</button>
 
     <div v-if="showNewMessage">
       <NewMessageForm />

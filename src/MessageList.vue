@@ -34,7 +34,7 @@
           <div v-if="items[selectedItem].thumbnails && items[selectedItem].thumbnails[index]" class="thumbnail">
             <img :src="items[selectedItem].thumbnails[index]" @click="openImage(items[selectedItem].photos[index])" alt="Thumbnail" />
           </div>
-          <button v-else class="thumbnail-placeholder" @click="openImage(items[selectedItem].photos[index])">{{ image }}</button>
+          <button v-else class="thumbnail-placeholder" @click="openImage(items[selectedItem].photos[index])" alt="Bild">{{ image }}</button>
         </div>
 
       </div>
@@ -70,7 +70,8 @@ export default {
       items: [],
       selectedItem: null,
       statuses: ["Abgeschickt", "Empfangen", "in Bearbeitung", "Abgeschlossen"],
-      menuOpen: false
+      menuOpen: false,
+      imageData: null,
     };
   },
   async created() {
@@ -82,8 +83,9 @@ export default {
           const contentResponse = await axios.get(`http://localhost:4000/Meldungen/${filename}`);
           const item = contentResponse.data;
           console.log('item.images:', item.images); // Log item.images directly
-          // const thumbnails = item.images ? item.images.map(imageName => `http://localhost:4000/thumbnail/${imageName}`) : [];
-          const photos = item.images ? item.images.map(imageName => `http://localhost:4000/photo/${imageName}`) : [];
+          // Für Thumbnails selbe Foto-ID
+          // const thumbnails = item.images ? item.images.map(imageName => `http://localhost:4000/Thumbnail/${imageName}`) : [];
+          const photos = item.images ? item.images.map(imageName => `http://localhost:4000/Fotos/${imageName}`) : [];
           this.items.push({
             title: `${item.Grund} ${item.Montageplatz} ${new Date(item.Zeitstempel).toLocaleString()}`,
             content: item.Text,
@@ -114,6 +116,7 @@ export default {
     selectItem(index) {
       this.selectedItem = index;
       this.menuOpen = false;
+      // Bildnamen auslesen und Bilder abrufen über Get-Request
     },
     closeItem() {
       this.selectedItem = null;
