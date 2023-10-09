@@ -28,15 +28,22 @@
         <p><strong>Baugruppe:</strong> {{ items[selectedItem].baugruppe }}</p>
         <p><strong>Grund:</strong> {{ items[selectedItem].grund }}</p>
         <p><strong>Zeitpunkt:</strong> {{ items[selectedItem].zeitstempel }} Uhr</p>
-        <!-- <img v-if="items[selectedItem].image" :src="items[selectedItem].image" alt="Bild" /> -->
-        <!-- Placeholder or Thumbnail Display -->
-        <div v-for="(image, index) in items[selectedItem].images" :key="index" class="thumbnail-container">
-          <div v-if="items[selectedItem].thumbnails && items[selectedItem].thumbnails[index]" class="thumbnail">
-            <img :src="items[selectedItem].thumbnails[index]" @click="openImage(items[selectedItem].photos[index])" alt="Thumbnail" />
+        <div v-if="imageData && imageData.length > 0">
+          <div v-for="(image, index) in imageData" :key="index" class="thumbnail-container">
+            <!-- Klick-Event hinzugefügt, um das Modal zu öffnen für großes Bild -->
+            <img :src="image" alt="Image" @click="openImageModal(image)" />
           </div>
-          <button v-else class="thumbnail-placeholder" @click="openImage(items[selectedItem].photos[index])" alt="Bild">{{ image }}</button>
+        </div>
+          
+        <div v-if="!imageData || imageData.length == 0" class="no-images-placeholder">
+          No Images Available
         </div>
 
+        <!-- Das ausgewählte Bild wird im Modal angezeigt -->
+        <ModalComponent v-model="showModalBVorschau" title="Foto" modal-class="modal-gross">
+          <img style="max-width:100%;max-height:100%;" :src="selectedImage" />
+        </ModalComponent>
+          
       </div>
 
 
@@ -72,6 +79,8 @@ export default {
       statuses: ["Abgeschickt", "Empfangen", "in Bearbeitung", "Abgeschlossen"],
       menuOpen: false,
       imageData: null,
+      showModalBVorschau: false,
+      selectedImage: ''  // Zustand für das aktuell ausgewählte Bild
     };
   },
   async created() {
@@ -82,16 +91,12 @@ export default {
         try {
           const contentResponse = await axios.get(`http://localhost:4000/Meldungen/${filename}`);
           const item = contentResponse.data;
-          console.log('item.images:', item.images); // Log item.images directly
-          // Für Thumbnails selbe Foto-ID
-          // const thumbnails = item.images ? item.images.map(imageName => `http://localhost:4000/Thumbnail/${imageName}`) : [];
+          console.log(item);
           const photos = item.images ? item.images.map(imageName => `http://localhost:4000/Fotos/${imageName}`) : [];
           this.items.push({
             title: `${item.Grund} ${item.Montageplatz} ${new Date(item.Zeitstempel).toLocaleString()}`,
             content: item.Text,
-            // thumbnails,
-            photos,
-            // image: null, // Array mit Bildnamen, wenn Array, dann Thumbnails abrufen vom Server
+            images: item.images,
             status: item.Status,
             abteilungen: item.Abteilungen.join(", "),
             auftrag: item.Auftrag,
@@ -99,9 +104,7 @@ export default {
             grund: item.Grund.join(", "),
             zeitstempel: new Date(item.Zeitstempel).toLocaleString()
           });
-          // log the URLs to the console
-          // console.log('Thumbnails URLs:', thumbnails);
-          console.log('Photos URLs:', photos);
+          // console.log('Images URLs:', item.images);
         } catch (error) {
           console.error(`Error fetching content for ${filename}:`, error);
         }
@@ -111,12 +114,24 @@ export default {
       console.error('Error fetching filenames:', error);
     }
   },
-
   methods: {
-    selectItem(index) {
-      this.selectedItem = index;
+    async selectItem(newIndex) {
+      this.selectedItem = newIndex;
       this.menuOpen = false;
-      // Bildnamen auslesen und Bilder abrufen über Get-Request
+      this.imageData = []; // Clear previous imageData
+      
+      if(this.items[newIndex].images && this.items[newIndex].images.length > 0) {
+          try {
+              const imagePromises = this.items[newIndex].images.map(async imageName => {
+                  const response = await axios.get(`http://localhost:4000/Fotos/${imageName}`, { responseType: 'blob' });
+                  const dataUrl = URL.createObjectURL(response.data);
+                  return dataUrl;
+              });
+              this.imageData = await Promise.all(imagePromises);
+          } catch(error) {
+              console.error('Error fetching images:', error);
+          }
+      }
     },
     closeItem() {
       this.selectedItem = null;
@@ -131,6 +146,10 @@ export default {
     },
     openImage(imageUrl) {
       window.open(imageUrl, '_blank');
+    },
+    openImageModal(imageSrc) {
+      this.selectedImage = imageSrc;
+      this.showModalBVorschau = true;
     }
   },
 };
@@ -311,6 +330,12 @@ export default {
 .status-circle.before-active {
   background-color: grey;
   border-color: grey;
+}
+
+.modal-gross {
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Mini Mobile Styles */
