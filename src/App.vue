@@ -646,11 +646,13 @@ export default {
           div_titel.style.width = "150px";
           div_titel.style.height = "100px";
           div_titel.style.float = "left";
-          div_titel.style.fontSize = "24px";
           div_titel.style.textAlign = "center";
           div_titel.style.verticalAlign = "middle";
-          div_titel.style.paddingTop = "35px";
-          div_titel.innerHTML = titel;
+          div_titel.style.display = "flex";
+          div_titel.style.flexDirection = "column";
+          div_titel.style.justifyContent = "center";
+          div_titel.style.alignItems = "center";
+          div_titel.innerHTML = '<span style="font-size: 24px">' + titel + '</span><span style="font-size: 16px;line-height:22px">(Bar-/QR-Code)</span>';
 
           let btn_inhalt = document.createElement("button");
           btn_inhalt.style.width = "200px";
@@ -708,11 +710,13 @@ export default {
           div_titel.style.width = "150px";
           div_titel.style.height = "100px";
           div_titel.style.float = "left";
-          div_titel.style.fontSize = "24px";
           div_titel.style.textAlign = "center";
           div_titel.style.verticalAlign = "middle";
-          div_titel.style.paddingTop = "35px";
-          div_titel.innerHTML = titel;
+          div_titel.style.display = "flex";
+          div_titel.style.flexDirection = "column";
+          div_titel.style.justifyContent = "center";
+          div_titel.style.alignItems = "center";
+          div_titel.innerHTML = '<span style="font-size: 24px">' + titel + '</span><span style="font-size: 16px;line-height:22px">(Foto)</span>';
 
           let btn_inhalt = document.createElement("button");
           btn_inhalt.style.width = "200px";
@@ -779,11 +783,13 @@ export default {
           div_titel.style.width = "150px";
           div_titel.style.height = "100px";
           div_titel.style.float = "left";
-          div_titel.style.fontSize = "24px";
           div_titel.style.textAlign = "center";
           div_titel.style.verticalAlign = "middle";
-          div_titel.style.paddingTop = "35px";
-          div_titel.innerHTML = titel;
+          div_titel.style.display = "flex";
+          div_titel.style.flexDirection = "column";
+          div_titel.style.justifyContent = "center";
+          div_titel.style.alignItems = "center";
+          div_titel.innerHTML = '<span style="font-size: 24px">' + titel + '</span><span style="font-size: 16px;line-height:22px">(Text)</span>';
 
           let btn_inhalt = document.createElement("button");
           btn_inhalt.style.width = "200px";
