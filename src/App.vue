@@ -4,7 +4,7 @@
                @on-loading="setLoading"
                @on-validate="handleValidation"
                @on-change="tabChange"
-               @on-error="handleErrorMessage" title="SAM-KI-Nachricht" subtitle="Stand 20.4.22 (Beta v0.1.2)" shape="tab" color="#006da0"
+               @on-error="handleErrorMessage" title="SAM-KI-Nachricht" subtitle="Stand 9.4.24 (Beta v0.2.0)" shape="tab" color="#006da0"
                back-button-text="Zurück"
                next-button-text="Weiter"
                finish-button-text="Einreichen">
@@ -50,78 +50,22 @@
 
     <tab-content title="Anlagen" :before-change="validateAnlagen" ref="tabanlagen">
       <div>
-        <table class="center">
-          <tr>
-            <div class="btn-group" v-if="displayScan">
-              <div style="background-color:lightblue; width: 150px; height: 100px; float:left;font-size:24px;text-align:center;vertical-align: middle;padding-top:35px">Auftrag</div>
-              <div style="background-color:white; width: 200px; height: 100px; float:left;font-size:24px;text-align:center;vertical-align: middle;">
-               <p> {{ auftrag }} </p>
-              </div>
-              <button id="auftrag_scan" @click="scanAuftrag"><span>&#128269;</span></button>
-              <button id="auftrag_edit" @click="showModalA=true" style="color:black;"><span>&#9998;</span></button>
-              <button id="auftrag_rem" @click="auftrag='';">
-                <span v-if="auftrag==''" style="color:grey;">&#215;</span>
-                <span v-if="auftrag!=''" style="color:red;">&#215;</span>
-              </button>
-            </div>
-          </tr>
-          <ModalComponent v-model="showModalA" title="Auftrag" @after-open="textboxfokus('Auftrag')">
-            <input id="Auftrag" type="text" class="form-control" v-model="auftrag" />
-          </ModalComponent>
-          <div class="container" v-if="!displayScan">
-            <div class="barcode-scanner--area--container">
-              <div class="relative" style="justify-content:center;display:flex;font-size:18px">
-                <p>Auf Code ausrichten.</p><br>
-              </div>
-              <div class="relative" style="justify-content:center;display:flex;font-size:24px">
-                <button id="auftrag_scan_ende" @click="scanEnde" style="width:200px;height:50px;"><span style="color:red;font-size:24px">Abbrechen</span></button>
-              </div>
-              <!-- div class="square">
-                <div class="barcode-scanner--area--outer">
-                  <div class="barcode-scanner--area--inner"></div>
-                </div>
-              </!-->
-            </div>
-          </div>
-          
+        <table class="center" id="anlagenTabelle">   
+        </table>
 
-          <tr>
-            <div class="btn-group" v-if="displayScan">
-              <div style="background-color:lightblue; width: 150px; height: 100px; float:left;font-size:24px;text-align:center;vertical-align: middle;padding-top:35px">Baugruppe</div>
-              <div style="background-color:white; width: 200px; height: 100px; float:left;font-size:24px;text-align:center;vertical-align: middle;">
-               <p> {{ baugruppe }} </p>
-              </div>
-              <button id="bgruppe_scan" @click="scanBaugruppe"><span>&#128269;</span></button>
-              <button id="bgruppe_edit" @click="showModalB=true" style="color:black;"><span>&#9998;</span></button>
-              <button id="bgruppe_rem" @click="baugruppe='';">
-                <span v-if="baugruppe==''" style="color:grey;">&#215;</span>
-                <span v-if="baugruppe!=''" style="color:red;">&#215;</span>
-              </button>
-            </div>
-          </tr>
-          <ModalComponent v-model="showModalB" title="Baugruppe" @after-open="textboxfokus('Baugruppe')">
-            <input id="Baugruppe" type="text" class="form-control" v-model="baugruppe" />
-          </ModalComponent>
-
-       <!-- FOTO -->
-        <tr>
-        <div class="btn-group" v-if="displayScan">
-          <div style="background-color:lightblue; width: 150px; height: 100px; float:left;font-size:24px;text-align:center;vertical-align: middle;padding-top:35px;">Foto</div>
-          <input id="bild" type="file" accept="image/*" capture="camera" style="display:none;" @change="onImageChange" />
-          <button id="bild_vorschau" @click="showModalBVorschau=true" style="font-size:24px;width:200px">
-            <span v-if="!imageData" style="color:lightgrey;">Vorschau</span>
-            <img v-if="imageData" :src="imageData" style="max-width:100%;max-height:100%;">
-          </button>
-          <button id="bild_add" onclick="document.getElementById('bild').click();" style="color:green;"><span>&#128247;</span></button>
-          <!-- button id="bild_edit" :disabled="!imageData" @click="showModalBEditor=true" style="color:grey;"><span>&#9998;</span></button-->
-          <button id="bild_edit" :disabled="!imageData" @click="showModalBEditor=true" style="color:grey;"><span>&#9998;</span></button>
-          <button id="bild_rem" :disabled="!imageData" @click="removeImage" style="color:grey;"><span>&#215;</span></button>
-        </div>
-        </tr>
-        <ModalComponent v-model="showModalBVorschau" title="Foto" modal-class="modal-gross">
-          <img style="max-width:100%;max-height:100%;" :src="imageData" />
+        <ModalComponent v-model="showModalCode" :title="aktiverCode" @after-open="textboxfokus('showModalCodeInput')" @after-close="aktualisiereCodeAnlage">
+          <!-- input id="showModalCodeInput" type="text" class="form-control" v-model="anlagen[aktiverCode]"/ -->
+          <textarea class="form-control"
+            placeholder="Freitext"
+            v-model="anlagen[aktiverCode]"
+            style="height:80px; width:400px;"
+            id="showModalCodeInput"></textarea>
         </ModalComponent>
-        <ModalComponent v-model="showModalBEditor" title="Freies Markieren" modal-class="modal-gross" @after-open="initializeCanvas">
+
+        <ModalComponent v-model="showModalFotoVorschau" :title="aktivesFoto" modal-class="modal-gross">
+          <img style="max-width:100%;max-height:100%;" :src="anlagen[aktivesFoto]" />
+        </ModalComponent>
+        <ModalComponent v-model="showModalFotoEditor" title="Freies Markieren" modal-class="modal-gross" @after-open="initializeCanvas">
           <div ref="editorContainer">
             <button @click="cancelEditing" style="border-radius: 5px;background-color: #006da0;border: none;color: white;padding: 8px 16px;text-align: center;text-decoration: none;display: inline-block;font-size: 14px;margin-bottom: 20px;">Unmarkiert übernehmen</button>
             <button @click="saveEdits" style="border-radius: 5px;background-color: #006da0;border: none;color: white;padding: 8px 16px;text-align: center;text-decoration: none;display: inline-block;font-size: 14px;margin-bottom: 20px;float: right;">Markiert übernehmen</button>
@@ -141,7 +85,6 @@
               ></button>
             </div>
             
-            
             <canvas ref="canvas" 
               @mousedown="startDrawing"
               @mousemove="draw"
@@ -153,67 +96,27 @@
               @touchcancel.prevent="stopDrawing"
               style="float: left; border: none; max-width:100%;max-height:100%;"></canvas>
           </div>
-          
         </ModalComponent>
+        <input id="anlageInputFoto" type="file" accept="image/*" capture="camera" style="display:none;" @change="onImageChange" />
 
-
-        <!-- VIDEO -->
-        <!--tr>
-        <div class="btn-group" v-if="displayScan">
-          <div style="background-color:lightblue; width: 150px; height: 100px; float:left;font-size:24px;text-align:center;vertical-align: middle;padding-top:35px">Video</div>
-          <button id="video_vorschau" :disabled="!videoUrl" @click="showModalVVorschau=true" style="font-size:24px;width:200px">
-            <span v-if="videoUrl" style="color:black;">Vorschau</span> 
-            <span v-if="!videoUrl" style="color:lightgrey;">Vorschau</span>
-          </button>
-          <button id="video_add" @click="showModalVVorschau=true"><span>&#128247;</span></button>
-          <button id="video_leer" disabled=true></button>
-          <button id="video_rem" :disabled="!videoUrl" @click="removeVideo">
-            <span v-if="videoUrl" style="color:red;">&#215;</span> 
-            <span v-if="!videoUrl" style="color:grey;">&#215;</span>
-          </button>
-        </div>
-        </!--tr>
-        <ModalComponent v-model="showModalVVorschau" title="Video" @before-open="openVideo" @before-close="endVideo" modal-class="modal-flex">
-          <div style="text-align: center;">
-            <video ref="videoRec" width="640" height="auto" autoplay muted playsinline controls data-wf-ignore="true" data-object-fit="cover" />
-            <br>
-
-            <button class="button btn-video" v-if="!isRecording && !isFinished" @click="record">
-              <span style="color:red;">⬤</span>
-            </button>
-            <button class="button btn-video" v-if="isRecording && !isFinished" @click="stop">
-              <span>◼</span>
-            </button>
-            <button class="button btn-video" @click="resetVideo" v-if="isFinished">
-              <span style="color:red;">&#10006;</span>
-            </button>
-          </div>
-        </ModalComponent -->
-
-        <tr>
-          <div class="btn-group" v-if="displayScan">
-            <div style="background-color:lightblue; width: 150px; height: 100px; float:left;font-size:24px;text-align:center;vertical-align: middle;padding-top:35px">Freitext</div>
-            <button id="freitext_vorschau" @click="showModalF=true" style="font-size:24px;width:200px">
-              <span v-if="freitext" style="color:black;font-size:8px;white-space: pre-wrap;line-height:1">{{freitext}}</span> 
-              <span v-if="!freitext" style="color:lightgrey;">Vorschau</span> 
-            </button>
-            <button id="text_leer" disabled></button>
-            <button id="text_add" @click="showModalF=true" style="color:black;"><span>&#9998;</span></button>            
-            <button id="text_rem" @click="freitext='';">
-              <span v-if="freitext==''" style="color:grey;">&#215;</span>
-              <span v-if="freitext!=''" style="color:red;">&#215;</span>
-            </button>
-          </div>
-        </tr>
-        <ModalComponent v-model="showModalF" title="Freitext" @after-open="textboxfokus('freitextbox')">
+        <ModalComponent v-model="showModalText" :title="aktiverText" @after-open="textboxfokus('freitextbox')" @after-close="aktualisiereTextAnlage">
           <textarea class="form-control"
             placeholder="Freitext"
-            v-model="freitext"
+            v-model="anlagen[aktiverText]"
             style="height:80px; width:400px;"
-            id="freitextbox"
-          ></textarea>
+            id="freitextbox"></textarea>
         </ModalComponent>
-        </table>
+
+        <div class="container" v-if="!displayScan">
+          <div class="barcode-scanner--area--container">
+            <div class="relative" style="justify-content:center;display:flex;font-size:18px">
+              <p>Auf Code richten.</p><br>
+            </div>
+            <div class="relative" style="justify-content:center;display:flex;font-size:24px">
+              <button id="auftrag_scan_ende" @click="scanEnde" style="width:200px;height:50px;"><span style="color:red;font-size:24px">Abbrechen</span></button>
+            </div>
+          </div>
+        </div>
       </div>
     </tab-content>
 
@@ -233,47 +136,29 @@
 
     <tab-content title="Zusammenfassung">
       <div class="form-group">
-        <table>
+        <table style="table-layout:fixed;width:100%;">
           <tr>
-            <td>Betroffene Abteilungen:</td>
+            <td style="width:40%;">Betroffene Abteilungen:</td>
             <td>{{BetroffeneAbteilungen}}</td>
           </tr>
           <tr>
-            <td>Gewählte Gründe:</td>
+            <td style="width:40%;">Gewählte Gründe:</td>
             <td>{{GewaehlteGruende}}</td>
           </tr>
           <tr>
-            <td>Gewählte Verantwortliche:</td>
+            <td style="width:40%;">Gewählte Verantwortliche:</td>
             <td>{{GewaehlteVerantwortliche}}</td>
           </tr>
           <tr>
-            <td>Montageplatz:</td>
+            <td style="width:40%;">Montageplatz:</td>
             <td>{{ montageplatz }}</td>
           </tr>
-          <tr>
-            <td>Baugruppe:</td>
-            <td>{{ baugruppe }}</td>
-          </tr>
-          <tr>
-            <td>Auftrag:</td>
-            <td>{{ auftrag }}</td>
+          <tr v-for="(item, index) in Modell.Anlagen" :value="item" :key="index">
+            <td style="width:40%;">{{ index }}:</td>
+            <td v-if="item == 'Code' || item == 'Text'">{{ anlagen[index] }}</td>
+            <td v-if="item == 'Foto'"><img :src="anlagen[index]" style="max-width:40%;"></td>
           </tr>
         </table>
-
-        <!-- Zeigt Freitext an, falls vorhanden -->
-        <div v-if="freitext">
-          <p>Freitext: {{ freitext }}</p>
-        </div>
-
-        <!-- Zeigt Bilder in der Uebersicht an -->
-        <div v-if="imageData">
-          <img :src="imageData" style="max-width:30%">
-        </div>
-
-        <!-- Zeigt Video an, ob Video hochgeladen wurde -->
-        <!-- div v-if="videoUrl">
-          <video ref="videoPlayer" :src="videoUrl" width="640" height="480" autoplay loop muted playsinline />
-        </!-->
       </div>
     </tab-content>
 
@@ -291,18 +176,15 @@
       <button type="button" class="button" @click="showModalLizenz=true" style="background-color: transparent;">
         <img src="./assets/feld_info.png" style="height:50px;width:50px;border-radius:50%;box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.3)">
       </button>
-       <button type="button" class="button" @click="showModalProblem=true" style="background-color: transparent;">
+      <button type="button" class="button" @click="showModalProblem=true" style="background-color: transparent;">
         <img src="./assets/feld_idee.png" style="height:50px;width:50px;border-radius:50%;box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.3)">
       </button>
     </div>
 
     <ModalComponent v-model="showModalLizenz" title="Informationen und Lizenzen">
       Implementierung im Förderprojekt SAM-KI<br>
-      (c) 2023 Fraunhofer Institut für Produktionstechnik<br>und Automatisierung (FhG IPA)<br><br>
-      <strong>Lizenzen:</strong><br><br>
-      <div class="textbox" name="note" readonly v-html="licenseText">
-      </div>
-      <textarea>
+      (c) 2023 Fraunhofer Institut für Produktionstechnik<br>und Automatisierung (FhG IPA)<br>
+      <textarea class="textbox" name="note">
         Vue.js
 
         VueDragSelector
@@ -320,16 +202,15 @@
         Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
         The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
         THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-    
       </textarea>
     </ModalComponent>
-     <ModalComponent v-model="showModalProblem" title="Problem oder Feedback melden" modal-class="modal-problem" v-on:click.self="cancelProblemReport">
+    <ModalComponent v-model="showModalProblem" title="Problem oder Feedback melden" modal-class="modal-problem">
       <div>
         <label for="problemDescription" style="display: block; margin-bottom: 10px;">Beschreibung:</label>
-        <textarea id="problemDescription" v-model="problemDescription" style="display: block; resize: none; width: 98%; height: 200px; margin-bottom: 20px;"></textarea>
+        <textarea id="problemDescription" v-model="problemDescription" style="display: block; width: 98%; height: 200px; margin-bottom: 20px;"></textarea>
       </div>
-      <button @click.stop="cancelProblemReport" class="button">Abbrechen</button>
-      <button @click.stop="reportProblem" class="button" style="float: right;">Problem melden</button>
+      <button @click="cancelProblemReport" style="border-radius: 5px;background-color: #006da0;border: none;color: white;padding: 8px 16px;text-align: center;text-decoration: none;display: inline-block;font-size: 14px;">Abbrechen</button>
+      <button @click="reportProblem" style="border-radius: 5px;background-color: rgb(35, 204, 239);border: none;color: white;padding: 8px 16px;text-align: center;text-decoration: none;display: inline-block;font-size: 14px;float: right;">Problem melden</button>
     </ModalComponent>
   </div>
 </template>
@@ -340,7 +221,6 @@ import axios from 'axios';
 import PulseLoader from 'vue-spinner/src/PulseLoader.vue'
 import Vue from "vue";
 import { Preferences } from '@capacitor/preferences';
-import { ImageEditor } from '@toast-ui/vue-image-editor';
 import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
 import { Filesystem } from '@capacitor/filesystem';
 
@@ -352,36 +232,35 @@ export default {
   mixins: [],
   data() {
     return {
+      anlagen: {},
+      aktiverCode: '',
+      aktivesFoto: '',
+      aktivesFotoDaten: null,
+      aktiverText: '',
       imageBase64: '',
       uri: '',
       loading: false,
-      imageData: [],
-      selectedImages: [],
+      imageData: null,
       video: null,
       montageplatz: '',
       baugruppe: '',
       auftrag: '',
       name: '',
       freitext: "",
-      licenseText: "",
       selected: [],
+      showModalCode: false,
+      showModalFotoEditor: false,
+      showModalFotoVorschau: false,
+      showModalText: false,
       showModal: false,
-      showModalV: false,
-      showModalF: false,
-      showModalB: false,
-      showModalBScan: false,
-      showModalA: false,
-      showModalAScan: false,
       showModalEinst: false,
-      showModalVVorschau: false,
-      showModalBVorschau: false,
-      showModalBEditor: false,
       showModalProblem: false,
       problemDescription: '',
       displayScan: true,
       AuswahlAbteilungen: [],
       BetroffeneAbteilungen: '',
       AuswahlGrund: [],
+      addGrund: '',
       GewaehlteGruende: '',
       AuswahlVerantwortliche: [],
       GewaehlteVerantwortliche: '',
@@ -451,7 +330,7 @@ export default {
     this.queriesAbfragen();
   },
   watch: {
-    showModalBEditor(newValue) {
+    showModalFotoEditor(newValue) {
       if (newValue) {
         if (this.$refs.canvas) {
           this.initializeCanvas();
@@ -463,12 +342,7 @@ export default {
       } else {
         this.stopDrawing();
       }
-    },
-    imageData(newImageData, oldImageData) {
-      if (newImageData !== oldImageData && newImageData != null) {
-        this.showModalBEditor = true;
-      }
-    },
+    }
   },
   mounted() {
     console.log("Funktion mounted");
@@ -478,15 +352,11 @@ export default {
       const item = items[i];
       const uri = item.getUri();
       const mimeType = item.getType();
-    }*/
-  },
-  async created() {
-    try {
-      const response = await axios.get('/license.html');
-      this.licenseText = response.data;
-    } catch (error) {
-      console.error(error);
-    }
+    }*/ 
+    
+    this.$nextTick(() => {
+      this.initializeCanvas();
+    });
   },
   methods: {
     openVideo() {
@@ -608,13 +478,44 @@ export default {
       console.log("textboxfokus " + id);
       document.getElementById(id).focus();
     },
-    async afterOpenScan () {
-      console.log("Funktion afterOpenScan");
+    async scanCode() {
+      console.log("Funktion scanCode");
+      this.displayScan = false;
+      var body = document.getElementsByTagName('body')[0];
+      body.style.backgroundImage = 'none';
+
+      var tabelle = document.getElementById('anlagenTabelle');
+      tabelle.style.display = "none";
+
       const result = await BarcodeScanner.startScan(); // start scanning and wait for a result
-      BarcodeScanner.showBackground();
+
+      this.displayScan = true;
+      body.style.backgroundImage = 'url(Logo_kombiniert.png)';
+      tabelle.style.display = "table";
 
       if (result.hasContent) {
-        this.auftrag = result.content;
+        this.anlagen[this.aktiverCode] = result.content;
+        this.aktualisiereCodeAnlage();
+      }
+    },
+    aktualisiereCodeAnlage() {
+      console.log("aktualisiereCodeAnlage");
+      document.getElementById("anlagen_" + this.aktiverCode + "_inhalt").innerHTML = "<p>" + this.anlagen[this.aktiverCode] + "</p>";
+      if (this.anlagen[this.aktiverCode].trim().length === 0)
+      {
+        document.getElementById("anlagen_" + this.aktiverCode + "_loeschen").innerHTML = '<span style="color:grey">&#215;</span>';
+      } else {
+        document.getElementById("anlagen_" + this.aktiverCode + "_loeschen").innerHTML = '<span style="color:red">&#215;</span>';
+      }
+    },
+    aktualisiereTextAnlage() {
+      console.log("aktualisiereTextAnlage");
+      if (this.anlagen[this.aktiverText].trim().length === 0)
+      {
+        document.getElementById("anlagen_" + this.aktiverText + "_loeschen").innerHTML = '<span style="color:grey">&#215;</span>';
+      } else {
+        document.getElementById("anlagen_" + this.aktiverText + "_inhalt").innerHTML = '<span style="color:black;">[...]</span>';
+        document.getElementById("anlagen_" + this.aktiverText + "_loeschen").innerHTML = '<span style="color:red">&#215;</span>';
       }
     },
     async scanAuftrag () {
@@ -653,6 +554,8 @@ export default {
 
       var body = document.getElementsByTagName('body')[0];
       body.style.backgroundImage = 'url(Logo_kombiniert.png)';
+      var tabelle = document.getElementById('anlagenTabelle');
+      tabelle.style.display = "table";
 
       this.displayScan = true;
     },
@@ -665,14 +568,14 @@ export default {
           u8arr = new Uint8Array(n);
 
       while(n--){
-          u8arr[n] = bstr.charCodeAt(n);
+        u8arr[n] = bstr.charCodeAt(n);
       }
 
       return new File([u8arr], filename, {type:mime});
     },
     removeImage () {
       console.log("Funktion removeImage");
-      var bild = document.getElementById('bild');
+      var bild = document.getElementById('anlageInputFoto');
       bild.value = "";
 
       var e = {};
@@ -680,31 +583,23 @@ export default {
       e.target.files = null;
       this.onImageChange(e);
     },
-    removeImages() {
-      // Sort in descending order to avoid messing up the indices when splicing
-      this.selectedImages.sort((a, b) => b - a);
-      this.selectedImages.forEach(index => {
-        this.imageData.splice(index, 1);
-      });
-      this.selectedImages = [];
-    },
     removeVideo() {
       console.log("Funktion removeVideo");
       this.video = null;
     },
     onImageChange(e) {
       console.log("Funktion onImageChange");
-      var addButton = document.getElementById('bild_add');
-      var editButton = document.getElementById('bild_edit');
-      var remButton = document.getElementById('bild_rem');
+      var addButton = document.getElementById('anlagen_' + this.aktivesFoto + '_hinzufuegen');
+      var editButton = document.getElementById('anlagen_' + this.aktivesFoto + '_editieren');
+      var remButton = document.getElementById('anlagen_' + this.aktivesFoto + '_loeschen');
 
       const files = e.target.files;
       this.imageData = null;
 
       if (files) {
         addButton.style.color="grey";
-        editButton.style.color="black";
-        remButton.style.color="red";
+        editButton.innerHTML = '<span style="color:black">&#9998;</span>';
+        remButton.innerHTML = '<span style="color:red">&#215;</span>';
 
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
@@ -712,8 +607,17 @@ export default {
           reader.readAsDataURL(file);
           reader.onload = () => {
             this.imageData = reader.result;
-            // this.imageData.push(reader.result);
-            this.img.src = this.imageData;
+            this.anlagen[this.aktivesFoto] = this.imageData;
+            
+            let vorschau_ = document.getElementById('anlagen_' + this.aktivesFoto + '_inhalt');
+            vorschau_.innerHTML = '';
+            let img_ = document.createElement('img');
+            img_.style.maxWidth = "100%";
+            img_.style.maxHeight = "100%";
+            img_.src = this.imageData;
+            vorschau_.appendChild(img_);
+
+            this.showModalFotoEditor = true;
           };
           this.bildpfad = file;
         }
@@ -723,17 +627,215 @@ export default {
         remButton.style.color="grey";
       }
     },
-    imageNachEditor() {
-      this.$refs.tuiImageEditor.invoke('loadImageFromFile', this.bildpfad, 'image');
-    },
-    imageAusEditorSpeichern() {
-      var dataURL = this.$refs.tuiImageEditor.invoke('toDataURL');
-      var parseFile = this.dataURLtoFile(dataURL, 'image');
-      this.bildpfad = parseFile;
+    initializeAnlagen()
+    {
+      var tabelle = document.getElementById('anlagenTabelle');
+      var anlagen = this.Modell.Anlagen;
+
+      for (let i = 0; i < Object.keys(anlagen).length; i++)
+      {
+        const titel = Object.keys(anlagen)[i];
+        const wert = Object.values(anlagen)[i];
+
+        var vm = this;
+
+        if (wert == 'Code')
+        {
+          let div_titel = document.createElement("div");
+          div_titel.style.backgroundColor = 'lightblue';
+          div_titel.style.width = "150px";
+          div_titel.style.height = "100px";
+          div_titel.style.float = "left";
+          div_titel.style.fontSize = "24px";
+          div_titel.style.textAlign = "center";
+          div_titel.style.verticalAlign = "middle";
+          div_titel.style.paddingTop = "35px";
+          div_titel.innerHTML = titel;
+
+          let btn_inhalt = document.createElement("button");
+          btn_inhalt.style.width = "200px";
+          btn_inhalt.style.fontSize = "20px";
+          btn_inhalt.style.color = "black";
+          btn_inhalt.id = "anlagen_" + titel + "_inhalt";
+          btn_inhalt.addEventListener("click", function(btn){
+            let id_ = btn.currentTarget.id.split('_')[1];
+            vm.aktiverCode = id_;
+            vm.showModalCode = true;
+          });
+          
+          let btn_scan = document.createElement("button");
+          btn_scan.id = "anlagen_" + titel + "_scannen";
+          btn_scan.addEventListener("click", function(btn) {
+            vm.aktiverCode = btn.currentTarget.id.split('_')[1];
+            vm.scanCode();
+          });
+          btn_scan.innerHTML = "<span>&#128269;</span>";          
+
+          let btn_edit = document.createElement("button");
+          btn_edit.style.color = "black";
+          btn_edit.addEventListener("click", function(btn){
+            vm.aktiverCode = btn.currentTarget.id.split('_')[1];
+            vm.showModalCode = true;
+          });
+          btn_edit.id = "anlagen_" + titel + "_editieren";
+          btn_edit.innerHTML = "<span>&#9998;</span>";
+
+          let btn_rem = document.createElement("button");
+          btn_rem.addEventListener("click", function(btn){
+            let id_ = btn.currentTarget.id.split('_')[1];
+            vm.anlagen[id_] = '';
+            let element = document.getElementById("anlagen_" + id_ + "_inhalt");
+            element.innerText = '';
+            document.getElementById("anlagen_" + id_ + "_loeschen").innerHTML = '<span style="color:grey">&#215;</span>';
+          });
+          btn_rem.id = "anlagen_" + titel + "_loeschen";
+          btn_rem.innerHTML = '<span style="color:grey">&#215;</span>';
+
+          let div_btn = document.createElement("div");
+          div_btn.classList.add("btn-group");
+          div_btn.appendChild(div_titel);
+          div_btn.appendChild(btn_inhalt);
+          div_btn.appendChild(btn_scan);
+          div_btn.appendChild(btn_edit);
+          div_btn.appendChild(btn_rem);
+
+          let tr = document.createElement("tr");
+          tr.appendChild(div_btn);
+          tabelle.appendChild(tr);
+        } else if (wert == 'Foto') {
+          let div_titel = document.createElement("div");
+          div_titel.style.backgroundColor = 'lightblue';
+          div_titel.style.width = "150px";
+          div_titel.style.height = "100px";
+          div_titel.style.float = "left";
+          div_titel.style.fontSize = "24px";
+          div_titel.style.textAlign = "center";
+          div_titel.style.verticalAlign = "middle";
+          div_titel.style.paddingTop = "35px";
+          div_titel.innerHTML = titel;
+
+          let btn_inhalt = document.createElement("button");
+          btn_inhalt.style.width = "200px";
+          btn_inhalt.style.fontSize = "24px";
+          btn_inhalt.id = "anlagen_" + titel + "_inhalt";
+          btn_inhalt.innerHTML = '<span style="color:lightgrey;">Vorschau</span>';
+          btn_inhalt.addEventListener("click", function(btn){
+            let id_ = btn.currentTarget.id.split('_')[1];
+            if (this.anlagen[id_] != null)
+            {
+              vm.aktivesFoto = id_;
+              vm.showModalFotoVorschau = true;
+            }
+          });
+
+          let btn_add = document.createElement("button");
+          btn_add.addEventListener("click", function(btn) {
+            let id_ = btn.currentTarget.id.split('_')[1];
+            vm.aktivesFoto = id_;
+            document.getElementById('anlageInputFoto').click();
+          });
+          btn_add.id = "anlagen_" + titel + "_hinzufuegen";
+          btn_add.innerHTML = "<span>&#128247;</span>";
+
+          let btn_edit = document.createElement("button");
+          btn_edit.style.color = "black";
+          btn_edit.addEventListener("click", function(btn){
+            let id_ = btn.currentTarget.id.split('_')[1];
+            if (this.anlagen[id_] != null)
+            {
+              vm.aktivesFoto = id_;
+              vm.showModalFotoEditor = true;
+            }
+          });
+          btn_edit.id = "anlagen_" + titel + "_editieren";
+          btn_edit.innerHTML = '<span style="color:grey;">&#9998;</span>';
+
+          let btn_rem = document.createElement("button");
+          btn_rem.addEventListener("click", function(btn){
+            let id_ = btn.currentTarget.id.split('_')[1];
+            vm.anlagen[id_] = null;
+            let element = document.getElementById("anlagen_" + id_ + "_inhalt");
+            element.innerHTML = '<span style="color:lightgrey;">Vorschau</span>';
+            document.getElementById("anlagen_" + id_ + "_loeschen").innerHTML = '<span style="color:grey">&#215;</span>';
+            document.getElementById("anlagen_" + id_ + "_editieren").innerHTML = '<span style="color:grey">&#9998;</span>';
+          });
+          btn_rem.id = "anlagen_" + titel + "_loeschen";
+          btn_rem.innerHTML = '<span style="color:grey">&#215;</span>';
+
+          let div_btn = document.createElement("div");
+          div_btn.classList.add("btn-group");
+          div_btn.appendChild(div_titel);
+          div_btn.appendChild(btn_inhalt);
+          div_btn.appendChild(btn_add);
+          div_btn.appendChild(btn_edit);
+          div_btn.appendChild(btn_rem);
+
+          let tr = document.createElement("tr");
+          tr.appendChild(div_btn);
+          tabelle.appendChild(tr);
+        } else if (wert == 'Text') {
+          let div_titel = document.createElement("div");
+          div_titel.style.backgroundColor = 'lightblue';
+          div_titel.style.width = "150px";
+          div_titel.style.height = "100px";
+          div_titel.style.float = "left";
+          div_titel.style.fontSize = "24px";
+          div_titel.style.textAlign = "center";
+          div_titel.style.verticalAlign = "middle";
+          div_titel.style.paddingTop = "35px";
+          div_titel.innerHTML = titel;
+
+          let btn_inhalt = document.createElement("button");
+          btn_inhalt.style.width = "200px";
+          btn_inhalt.style.fontSize = "24px";
+          btn_inhalt.id = "anlagen_" + titel + "_inhalt";
+          btn_inhalt.innerHTML = '<span style="color:lightgrey;">Vorschau</span>';
+          btn_inhalt.addEventListener("click", function(btn){
+            let id_ = btn.currentTarget.id.split('_')[1];
+            vm.aktiverText = id_;
+            vm.showModalText = true;
+          });
+
+          let btn_leer = document.createElement("button");
+          btn_leer.disabled = true;
+
+          let btn_add = document.createElement("button");
+          btn_add.addEventListener("click", function(btn) {
+            let id_ = btn.currentTarget.id.split('_')[1];
+            vm.aktiverText = id_;
+            vm.showModalText = true;
+          });
+          btn_add.id = "anlagen_" + titel + "_hinzufuegen";
+          btn_add.innerHTML = '<span style="color:black;">&#9998;</span>';
+
+          let btn_rem = document.createElement("button");
+          btn_rem.addEventListener("click", function(btn){
+            let id_ = btn.currentTarget.id.split('_')[1];
+            vm.anlagen[id_] = '';
+            let element = document.getElementById("anlagen_" + id_ + "_inhalt");
+            element.innerHTML = '<span style="color:lightgrey;">Vorschau</span>';
+            document.getElementById("anlagen_" + id_ + "_loeschen").innerHTML = '<span style="color:grey">&#215;</span>';
+          });
+          btn_rem.id = "anlagen_" + titel + "_loeschen";
+          btn_rem.innerHTML = '<span style="color:grey">&#215;</span>';
+
+          let div_btn = document.createElement("div");
+          div_btn.classList.add("btn-group");
+          div_btn.appendChild(div_titel);
+          div_btn.appendChild(btn_inhalt);
+          div_btn.appendChild(btn_leer);
+          div_btn.appendChild(btn_add);
+          div_btn.appendChild(btn_rem);
+
+          let tr = document.createElement("tr");
+          tr.appendChild(div_btn);
+          tabelle.appendChild(tr);
+        }
+      }
     },
     // Canvas
     initializeCanvas() {
-      if (!this.imageData) {
+      if (!this.anlagen[this.aktivesFoto] == null) {
         return;
       }
 
@@ -752,7 +854,7 @@ export default {
       };
 
       // Start loading the image
-      img.src = this.imageData;
+      img.src = this.anlagen[this.aktivesFoto];
     },
     getEventCoords(e) {
       const event = e.type.startsWith('touch') ? e.touches[0] : e;
@@ -785,11 +887,19 @@ export default {
       this.isDrawing = false;
     },
     saveEdits() {
-      this.imageData = this.canvas.toDataURL("image/jpeg", 0.7);
+      this.anlagen[this.aktivesFoto] = this.canvas.toDataURL("image/jpeg", 0.7);
       this.$nextTick(() => {
-        this.showModalBEditor = false;
+        this.showModalFotoEditor = false;
       });
       this.editMode = false;
+
+      let vorschau_ = document.getElementById('anlagen_' + this.aktivesFoto + '_inhalt');
+      vorschau_.innerHTML = '';
+      let img_ = document.createElement('img');
+      img_.style.maxWidth = "100%";
+      img_.style.maxHeight = "100%";
+      img_.src = this.anlagen[this.aktivesFoto];
+      vorschau_.appendChild(img_);
     },
     drawImageOnCanvas() {
       const img = this.$refs.imageInModal;
@@ -802,14 +912,14 @@ export default {
       link.click();
     },
     cancelEditing() {
-      this.showModalBEditor = false;
+      this.showModalFotoEditor = false;
       this.editMode = false;
     },
     // Canvas Ende
     // Problemmeldung
     reportProblem() {
-      //var host = this.modelhost;//'http://' + window.location.hostname;
-      var host = 'http://127.0.0.1:4000'; // Host auf Port 4000 geändert, da sonst CORS Fehler
+      var host = this.modelhost;//'http://' + window.location.hostname;
+      //var host = 'http://127.0.0.1:4000'; // Host auf Port 4000 geändert, da sonst CORS Fehler
       let content = {
         description: this.problemDescription
       };
@@ -923,6 +1033,7 @@ export default {
           vm.RepertoireGruende = response.data.RepertoireGruende;
           vm.RepertoireVerantwortliche = response.data.RepertoireVerantwortliche;
           vm.Ziele = vm.Modell.VerantwortlicheAdressen;
+          vm.initializeAnlagen();
         });
       }
     },
@@ -1055,21 +1166,45 @@ export default {
     onComplete() {
       var host = this.modelhost;//'http://' + window.location.hostname;
 
+      if (this.addGrund != '' && this.addGrund != null)
+      {
+        var eintrag = this.AuswahlGrund.indexOf('Eigener Grund');
+        if (eintrag != -1) {
+          this.AuswahlGrund[eintrag] == this.addGrund;
+        }
+      }      
+
       var content = {
         Modellidentifikation: this.modellidentifikation,
         AuswahlVerantwortliche: this.AuswahlVerantwortliche,
         Abteilungen: this.AuswahlAbteilungen,
         Grund: this.AuswahlGrund,
-        Text: this.freitext,
         Montageplatz: this.montageplatz,
-        Baugruppe: this.baugruppe,
-        Auftrag: this.auftrag,
+        Anlagen: this.anlagen
       };
+      /*var anlagen = this.Modell.Anlagen;
+
+      for (let i = 0; i < Object.keys(anlagen).length; i++)
+      {
+        const titel = Object.keys(anlagen)[i];
+        const wert = Object.values(anlagen)[i];
+
+        if (wert == 'Text' || wert == 'Code')
+        {
+          if (this.anlagen[titel])
+          {
+            content[titel] = this.anlagen[titel];
+          } else {
+            content[titel] = "";
+          }
+        }
+      }
+        
 
       if (this.imageData != null)
       {
         content.Bild = this.imageData;
-      }
+      }*/
 
       /*if (this.video != null)
       {
@@ -1083,8 +1218,8 @@ export default {
 
       axios({
         method: 'post',
-        url: host + '/send',
-        data: content
+        url: host + '/send', 
+        data: content 
       }).then(function (response) {
         if (response.status == 200) {
           alert("Erfolgreich gemeldet!");
@@ -1116,7 +1251,28 @@ export default {
         {
           var grund = this.MoeglicheGruende[0];
           var r1 = this.$refs['gdk' + grund];
-          r1[0].handleClick();
+          r1[0].handleSelectChange(true);
+        }
+
+        var r = this.$refs['gdkEigener Grund'][0];
+        var vm = this;
+        //this.$refs['gdkEigener Grund'][0].$el.style.fontStyle = "italic";
+        if (r.selected) r.$el.style.backgroundColor = "#FF4081";
+        else r.$el.style.backgroundColor = "#23CCEF";
+
+        this.$refs['gdkEigener Grund'][0].handleClick = function () {
+          console.log("funktionsaufruf");
+          vm.addGrund = '';
+          if (!this.selected) {
+            vm.addGrund = prompt("Bitte eigenen Grund für die Kommunikation angeben:");
+            if (vm.addGrund != null && vm.addGrund != '') {            
+              this.$el.style.backgroundColor = "#FF4081";
+              this.handleSelectChange(!this.selected);
+            }
+          } else {
+            this.$el.style.backgroundColor = "#23CCEF";
+            this.handleSelectChange(!this.selected);
+          }
         }
       }
       if (tab2 == 3)
@@ -1125,7 +1281,7 @@ export default {
         {
           var verant = this.MoeglicheVerantwortliche[0];
           var r2 = this.$refs['ver' + verant];
-          r2[0].handleClick();
+          r2[0].handleSelectChange(true);
           //r[0].handleSelectChange(true);
           //r[0].selected = true;
           //this.AuswahlVerantwortliche = [this.MoeglicheVerantwortliche[0]];
@@ -1158,6 +1314,7 @@ export default {
           this.MoeglicheGruende.splice(0, 0, element2);
         })
       });
+      this.MoeglicheGruende.push('Eigener Grund');
 
       this.changeGrund();
     },
@@ -1166,7 +1323,9 @@ export default {
 
       this.GewaehlteGruende = "";
       this.AuswahlGrund.forEach(element => {
-        this.GewaehlteGruende = this.GewaehlteGruende + ", " + element;
+        if (element != 'Eigener Grund') this.GewaehlteGruende = this.GewaehlteGruende + ", " + element;
+        else this.GewaehlteGruende = this.GewaehlteGruende + ", " + this.addGrund;
+        //else this.GewaehlteGruende = this.GewaehlteGruende + ", " + this.addGrund + " (eigener Grund)";        
       });
       if (this.GewaehlteGruende != "") this.GewaehlteGruende = this.GewaehlteGruende.substring(2);
 
@@ -1219,6 +1378,12 @@ export default {
       return new Promise((resolve, reject) => {
         if (this.AuswahlGrund.length)
         {
+          /*if (this.AuswahlGrund.find(element => element == "Eigener Grund") !== undefined)
+          {
+            this.addGrund = '';
+            this.addGrund = prompt("Bitte eigenen Grund für die Kommunikation angeben:");
+            if (this.addGrund == '' || this.addGrund == null) reject(false);
+          }*/
           resolve(true);
         } else {
           alert("Grund auswählen!");
@@ -1346,11 +1511,6 @@ export default {
 /* Add a background color on hover */
 .btn-group button:active:hover {
   background-color: lightblue;
-}
-
-/* Selected Images */
-.selected {
-  border: 2px solid red;
 }
 
 .container {
