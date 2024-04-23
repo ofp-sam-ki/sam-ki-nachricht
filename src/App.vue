@@ -29,10 +29,7 @@
               {{Modellname}}
             </option>
           </select>
-          <!--<br><button type="button" class="button" @click="showModalEinst=false" style="float: right;">
-            Schließen
-          </button-->
-        </ModalComponent>
+        </ModalComponent>        
       </div>
     </tab-content>
     <tab-content title="Grund der Kommunikation" :before-change="validate2" ref="tabgdk">
@@ -171,6 +168,10 @@
 
     <div style="text-align:center" v-if="displayScan">
       <button type="button" class="button" @click="showModalEinst=true" style="background-color: transparent;">
+        <img src="./assets/server_verfuegbar.png" v-if="verbindungZumServer" style="height:50px;width:50px;border-radius:50%;box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.3);margin-right: 10px;">
+        <img class="blink" src="./assets/server_nicht_verfuegbar.png" v-if="!verbindungZumServer" style="height:50px;width:50px;border-radius:50%;box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.3);">
+      </button>
+      <button type="button" class="button" @click="showModalEinst=true" style="background-color: transparent;">
         <img src="./assets/feld_einstellungen3.png" style="height:50px;width:50px;border-radius:50%;box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.3)">
       </button>
       <button type="button" class="button" @click="showModalLizenz=true" style="background-color: transparent;">
@@ -284,6 +285,7 @@ export default {
         margin: '2px',
         radius: '100%'
       },
+      verbindungZumServer: false,
       modelhost: '',
       tmp_modelhost: '',
       modellidentifikation: '',
@@ -357,6 +359,8 @@ export default {
     this.$nextTick(() => {
       this.initializeCanvas();
     });
+    
+    setInterval(this.testeVerbindung, 15000);
   },
   methods: {
     openVideo() {
@@ -921,6 +925,17 @@ export default {
       this.showModalFotoEditor = false;
       this.editMode = false;
     },
+    testeVerbindung() {
+      var vm = this;
+
+      axios.get(this.modelhost +'/Modelle')
+        .then(function (response){
+          vm.verbindungZumServer = true;
+        })
+        .catch(function (error) {
+          vm.verbindungZumServer = false;
+        });
+      },
     // Canvas Ende
     // Problemmeldung
     reportProblem() {
@@ -1017,6 +1032,7 @@ export default {
 
       this.hostGeaendert();
       this.modellInitialisieren();
+      this.testeVerbindung();
     },
     anderesmodell() {
       console.log("funktion anderesmodell");
@@ -1368,9 +1384,13 @@ export default {
       if (this.GewaehlteVerantwortliche != "") this.GewaehlteVerantwortliche = this.GewaehlteVerantwortliche.substring(2);
     },
     validate () {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve, reject) => {       
         if (this.AuswahlAbteilungen.length)
         {
+          if (!this.verbindungZumServer)
+          {
+            alert("Achtung: Aktuell keine Verbindung zum Server!");
+          }
           resolve(true);
         } else {
           alert("Mindestens eine Abteilung auswählen!");
@@ -1384,12 +1404,6 @@ export default {
       return new Promise((resolve, reject) => {
         if (this.AuswahlGrund.length)
         {
-          /*if (this.AuswahlGrund.find(element => element == "Eigener Grund") !== undefined)
-          {
-            this.addGrund = '';
-            this.addGrund = prompt("Bitte eigenen Grund für die Kommunikation angeben:");
-            if (this.addGrund == '' || this.addGrund == null) reject(false);
-          }*/
           resolve(true);
         } else {
           alert("Grund auswählen!");
@@ -1581,6 +1595,24 @@ export default {
   max-width: 800px;
   display: flex;
   flex-direction: column;
+}
+
+.blink {
+  animation: blink 1s steps(1, end) infinite;
+}
+
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
 </style>
