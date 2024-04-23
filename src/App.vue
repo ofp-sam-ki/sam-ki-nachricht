@@ -4,7 +4,7 @@
                @on-loading="setLoading"
                @on-validate="handleValidation"
                @on-change="tabChange"
-               @on-error="handleErrorMessage" title="SAM-KI-Nachricht" subtitle="Stand 9.4.24 (Beta v0.2.0)" shape="tab" color="#006da0"
+               @on-error="handleErrorMessage" title="SAM-KI-Nachricht" subtitle="Stand 11.4.24 (Beta v0.2.0)" shape="tab" color="#006da0"
                back-button-text="Zurück"
                next-button-text="Weiter"
                finish-button-text="Einreichen">
@@ -184,7 +184,7 @@
 
     <ModalComponent v-model="showModalLizenz" title="Informationen und Lizenzen">
       Implementierung im Förderprojekt SAM-KI<br>
-      (c) 2023 Fraunhofer Institut für Produktionstechnik<br>und Automatisierung (FhG IPA)<br>
+      (c) 2023, 2024 Fraunhofer Institut für Produktionstechnik<br>und Automatisierung (FhG IPA)<br>
       <textarea class="textbox" name="note">
         Vue.js
 
